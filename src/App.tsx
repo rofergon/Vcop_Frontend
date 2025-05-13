@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import Dashboard from './pages/Dashboard';
+import Loans from './pages/Loans';
 import { Sun, Moon } from 'lucide-react';
 
 function App() {
@@ -57,29 +59,36 @@ function App() {
   };
   
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
-      <Header 
-        isWalletConnected={isWalletConnected}
-        walletAddress={walletAddress}
-        onConnectWallet={handleConnectWallet}
-        onDisconnectWallet={handleDisconnectWallet}
-      />
-      
-      {/* Theme Toggle Button */}
-      <button
-        onClick={toggleDarkMode}
-        className="fixed bottom-4 right-4 p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-300 dark:bg-gray-800 dark:text-white z-10"
-        aria-label="Toggle theme"
-      >
-        {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-      </button>
-      
-      <main className="flex-grow">
-        <Dashboard />
-      </main>
-      
-      <Footer />
-    </div>
+    <Router>
+      <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+        <Header 
+          isWalletConnected={isWalletConnected}
+          walletAddress={walletAddress}
+          onConnectWallet={handleConnectWallet}
+          onDisconnectWallet={handleDisconnectWallet}
+        />
+        
+        {/* Theme Toggle Button */}
+        <button
+          onClick={toggleDarkMode}
+          className="fixed bottom-4 right-4 p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-300 dark:bg-gray-800 dark:text-white z-10"
+          aria-label="Toggle theme"
+        >
+          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+        
+        <main className="flex-grow">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Navigate to="/" replace />} />
+            <Route path="/loans" element={<Loans />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+        
+        <Footer />
+      </div>
+    </Router>
   );
 }
 

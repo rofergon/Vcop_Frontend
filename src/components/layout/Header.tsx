@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import Button from '../common/Button';
 
@@ -17,12 +18,13 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const location = useLocation();
   
   const navItems = [
-    { name: 'Dashboard', href: '#', current: true },
-    { name: 'Swap', href: '#', current: false },
-    { name: 'Stats', href: '#', current: false },
-    { name: 'Learn', href: '#', current: false }
+    { name: 'Dashboard', path: '/', current: location.pathname === '/' },
+    { name: 'Préstamos', path: '/loans', current: location.pathname === '/loans' },
+    { name: 'Swap', path: '/swap', current: location.pathname === '/swap' },
+    { name: 'Stats', path: '/stats', current: location.pathname === '/stats' }
   ];
   
   const formatAddress = (address: string) => {
@@ -36,7 +38,7 @@ const Header: React.FC<HeaderProps> = ({
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">VCOP</span>
+              <Link to="/" className="text-2xl font-bold text-blue-600 dark:text-blue-400">VCOP</Link>
               <span className="ml-2 text-sm px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium">
                 PSM
               </span>
@@ -44,9 +46,9 @@ const Header: React.FC<HeaderProps> = ({
             
             <nav className="hidden md:ml-6 md:flex md:space-x-4 items-center">
               {navItems.map((item) => (
-                <a
+                <Link
                   key={item.name}
-                  href={item.href}
+                  to={item.path}
                   className={`px-3 py-2 rounded-md text-sm font-medium ${
                     item.current
                       ? 'text-blue-600 dark:text-blue-400'
@@ -55,7 +57,7 @@ const Header: React.FC<HeaderProps> = ({
                   aria-current={item.current ? 'page' : undefined}
                 >
                   {item.name}
-                </a>
+                </Link>
               ))}
             </nav>
           </div>
@@ -123,18 +125,19 @@ const Header: React.FC<HeaderProps> = ({
       <div className={`md:hidden ${isMenuOpen ? 'block' : 'hidden'}`}>
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           {navItems.map((item) => (
-            <a
+            <Link
               key={item.name}
-              href={item.href}
+              to={item.path}
               className={`block px-3 py-2 rounded-md text-base font-medium ${
                 item.current
                   ? 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/50'
                   : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
               }`}
               aria-current={item.current ? 'page' : undefined}
+              onClick={() => setIsMenuOpen(false)}
             >
               {item.name}
-            </a>
+            </Link>
           ))}
           
           {!isWalletConnected && (
