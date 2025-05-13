@@ -37,7 +37,7 @@ const PriceIndicator: React.FC<PriceIndicatorProps> = ({
   
   // Change indicator
   const isPositiveChange = change24h >= 0;
-  const changeColor = isPositiveChange ? 'text-green-500' : 'text-red-500';
+  const changeColor = isPositiveChange ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400';
   
   return (
     <div className={`flex items-center space-x-2 ${sizeClasses[size]} ${className}`}>
