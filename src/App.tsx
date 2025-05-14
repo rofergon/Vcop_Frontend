@@ -1,50 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import Dashboard from './pages/Dashboard';
 import Loans from './pages/Loans';
 import { Sun, Moon } from 'lucide-react';
+import { useDarkMode } from './context/DarkModeContext';
 
 function App() {
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
-  
-  // Initialize dark mode based on user preference or system preference
-  useEffect(() => {
-    // Check if user has previously set a preference
-    const darkModePreference = localStorage.getItem('darkMode');
-    
-    if (darkModePreference !== null) {
-      // Use stored preference
-      const prefersDarkMode = darkModePreference === 'true';
-      setIsDarkMode(prefersDarkMode);
-      if (prefersDarkMode) {
-        document.documentElement.classList.add('dark');
-      }
-    } else {
-      // Check system preference
-      const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setIsDarkMode(prefersDarkMode);
-      if (prefersDarkMode) {
-        document.documentElement.classList.add('dark');
-      }
-    }
-  }, []);
-  
-  const toggleDarkMode = () => {
-    const newDarkModeState = !isDarkMode;
-    setIsDarkMode(newDarkModeState);
-    
-    // Save user preference
-    localStorage.setItem('darkMode', String(newDarkModeState));
-    
-    // Apply dark mode class to html element
-    if (newDarkModeState) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  };
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
   
   return (
     <Router>

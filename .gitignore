@@ -23,3 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 .env
+src/Abis /VcopCollateral/README.md
+src/Abis /VcopCollateral/VCOPCollateralHook.sol
+src/Abis /VcopCollateral/VCOPCollateralized.sol
+src/Abis /VcopCollateral/VCOPCollateralManager.sol
+src/Abis /VcopCollateral/VCOPOracle.sol
+src/Abis /VcopCollateral/VCOPPriceCalculator.sol

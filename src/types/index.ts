@@ -25,8 +25,10 @@ export interface ReserveData {
 
 export interface PriceData {
   price: number;
-  change24h: number;
+  change: number;
   isPegHealthy: boolean;
+  deviation: number;
+  tick?: number;
 }
 
 export interface PSMStats {

@@ -45,7 +45,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
   };
   
   return (
-    <Card title={title} className="h-full">
+    <Card title={title} className="h-full bg-gradient-to-br from-white to-blue-50 dark:from-gray-900 dark:to-gray-800">
       {displayedTransactions.length === 0 ? (
         <div className="text-center py-4 text-gray-500 dark:text-gray-400">
           No transactions found

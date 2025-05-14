@@ -1,10 +1,10 @@
 import React from 'react';
 import PriceOverview from '../components/dashboard/PriceOverview';
-import ReserveSummary from '../components/dashboard/ReserveSummary';
+import BlockchainReserveSummary from '../components/dashboard/BlockchainReserveSummary';
 import SwapInterface from '../components/swap/SwapInterface';
 import TransactionList from '../components/transactions/TransactionList';
 import HowItWorks from '../components/education/HowItWorks';
-import { MOCK_PRICE_DATA, MOCK_RESERVE_DATA, MOCK_TRANSACTIONS } from '../utils/constants';
+import { MOCK_PRICE_DATA, MOCK_TRANSACTIONS } from '../utils/constants';
 
 const Dashboard: React.FC = () => {
   const handleSwapComplete = (txHash: string) => {
@@ -28,18 +28,16 @@ const Dashboard: React.FC = () => {
           <PriceOverview priceData={MOCK_PRICE_DATA} />
         </div>
         
-        {/* Reserve Summary */}
+        {/* Blockchain Reserve Summary */}
         <div className="lg:col-span-7">
-          <ReserveSummary reserveData={MOCK_RESERVE_DATA} />
+          <BlockchainReserveSummary />
         </div>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
         {/* Swap Interface - Centered in its column */}
-        <div className="lg:col-span-5 flex justify-center">
-          <div className="w-full max-w-md">
-            <SwapInterface onSwapComplete={handleSwapComplete} />
-          </div>
+        <div className="lg:col-span-5">
+          <SwapInterface onSwapComplete={handleSwapComplete} />
         </div>
         
         {/* Transaction List */}

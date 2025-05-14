@@ -105,7 +105,7 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
   };
   
   return (
-    <Card title="Swap" className="max-w-md mx-auto w-full">
+    <Card title="Swap" className="w-full h-full bg-gradient-to-br from-white to-blue-50 dark:from-gray-900 dark:to-gray-800">
       <div className="space-y-6">
         {/* From Token Input */}
         <TokenInput
