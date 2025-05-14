@@ -79,18 +79,24 @@ const PriceOverview: React.FC<PriceOverviewProps> = ({ priceData: propsPriceData
       }
 
       // Safely convert values to proper types
-      const price = vcopToCopPrice ? Number(vcopToCopPrice.toString()) / 1000000 : 0;
+      // vcopToUsdPrice es el precio actual del VCOP en USD (con 6 decimales)
+      const currentPrice = vcopToUsdPrice ? Number(vcopToUsdPrice.toString()) / 1000000 : 0;
+      
+      // vcopToCopPrice es la relación VCOP/COP (con 6 decimales)
+      const vcopCopRate = vcopToCopPrice ? Number(vcopToCopPrice.toString()) / 1000000 : 0;
+      
+      // targetPrice es el precio objetivo en COP
       const targetPriceValue = targetRate ? Number(targetRate.toString()) / 1000000 : 4200;
       setTargetPrice(targetPriceValue);
       
       // Calculate price deviation if we have valid values
-      const deviation = (price && targetPriceValue) 
-        ? Math.abs((price / targetPriceValue - 1) * 100) 
+      const deviation = (vcopCopRate && targetPriceValue) 
+        ? Math.abs((vcopCopRate / 1 - 1) * 100) 
         : 0;
       
       // Create PriceData object with safe values
       const newPriceData: PriceData = {
-        price: price || 0,
+        price: currentPrice || 0,  // Usar vcopToUsdPrice como el precio actual
         change: 0, // We don't have historical data for change
         isPegHealthy: Boolean(isAtParity),
         deviation,
@@ -144,15 +150,26 @@ const PriceOverview: React.FC<PriceOverviewProps> = ({ priceData: propsPriceData
   
   return (
     <Card title="Precio VCOP" className="h-full bg-gradient-to-br from-white to-blue-50 dark:from-gray-900 dark:to-gray-800">
-      <div className="flex flex-col space-y-8">
+      <div className="flex flex-col space-y-6">
         <div className="flex flex-col items-center justify-center">
-          <PriceIndicator 
-            priceData={priceData} 
-            size="lg" 
-            showChange={true} 
-          />
+          <div className="text-center mb-2">
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Precio Actual en USD (Pool Uniswap)
+            </div>
+            <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              USD ${priceData?.price ? Math.round(priceData.price).toLocaleString('es-CO') : "0"}
+            </div>
+          </div>
           
-          <div className="mt-8 flex items-center">
+          <div className="mt-2">
+            <PriceIndicator 
+              priceData={priceData} 
+              size="lg" 
+              showChange={true} 
+            />
+          </div>
+          
+          <div className="mt-6 flex items-center">
             <div 
               className={`px-4 py-2 rounded-full text-sm font-medium transform transition-all duration-300 hover:scale-105 ${
                 isPegHealthy 
@@ -163,18 +180,22 @@ const PriceOverview: React.FC<PriceOverviewProps> = ({ priceData: propsPriceData
               {isPegHealthy ? '¡Peg Estable!' : 'Peg Bajo Presión'}
             </div>
           </div>
+          
+          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Precio obtenido de la pool de liquidez Uniswap V4
+          </div>
         </div>
 
         <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
           <div className="grid grid-cols-2 gap-6">
             <div className="text-center">
-              <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Precio Objetivo</div>
+              <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Precio Objetivo (COP)</div>
               <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 COP ${targetPrice.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
               </div>
             </div>
             <div className="text-center">
-              <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Desviación</div>
+              <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Desviación del Peg</div>
               <div className={`text-2xl font-bold ${
                 typeof priceData.deviation === 'number' ? (
                   priceData.deviation < 2 

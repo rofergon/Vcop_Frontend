@@ -48,6 +48,11 @@ export function useReserveData(): { reserveData: ReserveData | null, loading: bo
   const { isConnected } = useAccount();
 
   const fetchReserveData = useCallback(async () => {
+    if (!isConnected) {
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
       
@@ -86,7 +91,7 @@ export function useReserveData(): { reserveData: ReserveData | null, loading: bo
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isConnected]);
 
   useEffect(() => {
     fetchReserveData();
