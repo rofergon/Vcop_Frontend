@@ -7,8 +7,6 @@ import Loans from './pages/Loans';
 import { Sun, Moon } from 'lucide-react';
 
 function App() {
-  const [isWalletConnected, setIsWalletConnected] = useState<boolean>(false);
-  const [walletAddress, setWalletAddress] = useState<string>('');
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   
   // Initialize dark mode based on user preference or system preference
@@ -33,16 +31,6 @@ function App() {
     }
   }, []);
   
-  const handleConnectWallet = () => {
-    setIsWalletConnected(true);
-    setWalletAddress('0x71C7656EC7ab88b098defB751B7401B5f6d8976F');
-  };
-  
-  const handleDisconnectWallet = () => {
-    setIsWalletConnected(false);
-    setWalletAddress('');
-  };
-
   const toggleDarkMode = () => {
     const newDarkModeState = !isDarkMode;
     setIsDarkMode(newDarkModeState);
@@ -61,12 +49,7 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
-        <Header 
-          isWalletConnected={isWalletConnected}
-          walletAddress={walletAddress}
-          onConnectWallet={handleConnectWallet}
-          onDisconnectWallet={handleDisconnectWallet}
-        />
+        <Header />
         
         {/* Theme Toggle Button */}
         <button

@@ -1,23 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown } from 'lucide-react';
-import Button from '../common/Button';
+import { Menu, X } from 'lucide-react';
+import CustomConnectButton from '../wallet/ConnectButton';
 
-interface HeaderProps {
-  onConnectWallet: () => void;
-  isWalletConnected: boolean;
-  walletAddress?: string;
-  onDisconnectWallet: () => void;
-}
+interface HeaderProps {}
 
-const Header: React.FC<HeaderProps> = ({
-  onConnectWallet,
-  isWalletConnected,
-  walletAddress = '',
-  onDisconnectWallet
-}) => {
+const Header: React.FC<HeaderProps> = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const location = useLocation();
   
   const navItems = [
@@ -26,11 +15,6 @@ const Header: React.FC<HeaderProps> = ({
     { name: 'Swap', path: '/swap', current: location.pathname === '/swap' },
     { name: 'Stats', path: '/stats', current: location.pathname === '/stats' }
   ];
-  
-  const formatAddress = (address: string) => {
-    if (!address) return '';
-    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-  };
   
   return (
     <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-100 dark:border-gray-800">
@@ -63,49 +47,10 @@ const Header: React.FC<HeaderProps> = ({
           </div>
           
           <div className="hidden md:flex items-center">
-            {isWalletConnected ? (
-              <div className="relative">
-                <button
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors duration-200 text-gray-900 dark:text-gray-200"
-                >
-                  <span>{formatAddress(walletAddress)}</span>
-                  <ChevronDown size={16} />
-                </button>
-                
-                {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 dark:ring-gray-700">
-                    <div className="py-1">
-                      <button
-                        onClick={onDisconnectWallet}
-                        className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
-                      >
-                        Disconnect wallet
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Button onClick={onConnectWallet}>
-                Connect Wallet
-              </Button>
-            )}
+            <CustomConnectButton />
           </div>
           
           <div className="flex md:hidden items-center">
-            {isWalletConnected && (
-              <div className="mr-2">
-                <button
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors duration-200 text-sm text-gray-900 dark:text-gray-200"
-                >
-                  <span>{formatAddress(walletAddress)}</span>
-                  <ChevronDown size={14} />
-                </button>
-              </div>
-            )}
-            
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none"
@@ -140,13 +85,9 @@ const Header: React.FC<HeaderProps> = ({
             </Link>
           ))}
           
-          {!isWalletConnected && (
-            <div className="pt-2">
-              <Button onClick={onConnectWallet} fullWidth>
-                Connect Wallet
-              </Button>
-            </div>
-          )}
+          <div className="pt-2">
+            <CustomConnectButton />
+          </div>
         </div>
       </div>
     </header>
