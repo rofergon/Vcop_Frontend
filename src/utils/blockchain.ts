@@ -3,13 +3,8 @@ import { useAccount } from 'wagmi';
 import { ReserveData } from '../types';
 import MockERC20Abi from '../Abis /simplified_abi_MockERC20.json';
 import VCOPAbi from '../Abis /simplified_abi_VCOPCollateralized.json';
-
-// Contract addresses on Base Sepolia
-const USDC_ADDRESS = '0xE5964b67F1F121A54da973652F4B839C4F453Ca6';
-const VCOP_ADDRESS = '0xd1F263942EE26d34B56f50F05D59E84b10FF9fD1';
-// Reserve contract address
-const RESERVE_ADDRESS = '0xd447ef9ab1dcc346a57ecdab27f02c20e6d2dbf6';
-const CONVERSION_RATE = 4295; // 1 USDC = 4295 VCOP (Colombian Peso rate)
+import VCOPCollateralManagerAbi from '../Abis /simplified_abi_VCOPCollateralManager.json';
+import { CONTRACT_ADDRESSES, BLOCKCHAIN_CONSTANTS, CHAIN_CONFIG } from './constants';
 
 // Format from wei with proper decimals
 export function formatFromWei(value: bigint, decimals: number): number {
@@ -26,7 +21,7 @@ export async function callReadFunction(
   try {
     // Create provider using ethers.js - no need to depend on window.ethereum
     const ethers = await import('ethers');
-    const provider = new ethers.JsonRpcProvider('https://sepolia.base.org');
+    const provider = new ethers.JsonRpcProvider(CHAIN_CONFIG.RPC_URL);
     
     // Create contract instance
     const contract = new ethers.Contract(contractAddress, abi, provider);
@@ -56,24 +51,17 @@ export function useReserveData(): { reserveData: ReserveData | null, loading: bo
     try {
       setLoading(true);
       
-      // Fetch token balances using contract ABIs - query balanceOf for reserve contract
-      const usdcBalance = await callReadFunction(
-        USDC_ADDRESS,
-        MockERC20Abi,
-        'balanceOf',
-        [RESERVE_ADDRESS]
+      // Fetch PSM reserves using VCOPCollateralManager contract
+      const usdcPsmReserves = await callReadFunction(
+        CONTRACT_ADDRESSES.VCOP_COLLATERAL_MANAGER,
+        VCOPCollateralManagerAbi,
+        'psmReserves',
+        [CONTRACT_ADDRESSES.USDC]
       );
       
-      const vcopBalance = await callReadFunction(
-        VCOP_ADDRESS,
-        VCOPAbi,
-        'balanceOf',
-        [RESERVE_ADDRESS]
-      );
-      
-      // Format balances (both USDC and VCOP have 6 decimals)
-      const usdcFormatted = formatFromWei(BigInt(usdcBalance.toString()), 6);
-      const vcopFormatted = formatFromWei(BigInt(vcopBalance.toString()), 6);
+      // Format data from psmReserves
+      const usdcFormatted = formatFromWei(BigInt(usdcPsmReserves.collateralAmount.toString()), BLOCKCHAIN_CONSTANTS.TOKEN_DECIMALS);
+      const vcopFormatted = formatFromWei(BigInt(usdcPsmReserves.vcopAmount.toString()), BLOCKCHAIN_CONSTANTS.TOKEN_DECIMALS);
       
       // Calculate total value in USD (using USDC as dollar value)
       const totalValueUSD = usdcFormatted;
@@ -96,8 +84,8 @@ export function useReserveData(): { reserveData: ReserveData | null, loading: bo
   useEffect(() => {
     fetchReserveData();
     
-    // Set up polling to refresh data every 5 seconds
-    const interval = setInterval(fetchReserveData, 5000);
+    // Set up polling to refresh data using constant interval
+    const interval = setInterval(fetchReserveData, BLOCKCHAIN_CONSTANTS.REFRESH_INTERVAL);
     
     return () => clearInterval(interval);
   }, [fetchReserveData]);

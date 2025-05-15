@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import Card from '../common/Card';
 import { formatCurrency } from '../../utils/helpers';
 import { useReserveData } from '../../utils/blockchain';
-import { MOCK_RESERVE_DATA } from '../../utils/constants';
+import { MOCK_RESERVE_DATA, BLOCKCHAIN_CONSTANTS } from '../../utils/constants';
 
-// Conversion rate from USDC to VCOP (Colombian Pesos)
-const CONVERSION_RATE = 4295;
+// Get conversion rate from constants 
+const CONVERSION_RATE = BLOCKCHAIN_CONSTANTS.CONVERSION_RATE;
 
 const BlockchainReserveSummary: React.FC = () => {
   const { reserveData, loading, error } = useReserveData();
@@ -14,9 +14,6 @@ const BlockchainReserveSummary: React.FC = () => {
   // Use mock data if blockchain data isn't available yet
   const data = reserveData || MOCK_RESERVE_DATA;
   const { vcop, usdc, totalValueUSD } = data;
-  
-  // VCOP value is already in tokens, no need to multiply by the rate
-  // We just format it for display
   
   // Calculate percentages for progress bars - VCOP value in USD terms for fair comparison
   const vcopValueInUSD = vcop / CONVERSION_RATE; // Convert VCOP to USD to calculate percentage
@@ -33,10 +30,10 @@ const BlockchainReserveSummary: React.FC = () => {
   }, [reserveData]);
 
   return (
-    <Card title="Reserve Summary" className="h-full bg-gradient-to-br from-white to-indigo-50 dark:from-gray-900 dark:to-gray-800">
+    <Card title="Resumen de Reservas" className="h-full bg-gradient-to-br from-white to-indigo-50 dark:from-gray-900 dark:to-gray-800">
       <div className="space-y-8">
         <div className="flex items-center justify-between">
-          <h4 className="text-xl font-semibold text-gray-700 dark:text-gray-300">Total Value</h4>
+          <h4 className="text-xl font-semibold text-gray-700 dark:text-gray-300">Valor Total</h4>
           <div className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
             {formatCurrency(totalReserveUSD, 'USD', 2)}
           </div>
@@ -89,19 +86,19 @@ const BlockchainReserveSummary: React.FC = () => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>Updating data...</span>
+                  <span>Actualizando datos...</span>
                 </>
               ) : (
                 <>
                   <svg className="h-4 w-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                   </svg>
-                  <span>Real-time data</span>
+                  <span>Datos en tiempo real</span>
                 </>
               )}
             </div>
             <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              {lastUpdated.toLocaleTimeString('en-US')}
+              {lastUpdated.toLocaleTimeString('es-CO')}
             </div>
           </div>
           {error && (
@@ -113,7 +110,7 @@ const BlockchainReserveSummary: React.FC = () => {
             </div>
           )}
           <div className="mt-2 text-xs text-gray-500 dark:text-gray-500">
-            Auto-updating every 5 seconds
+            Actualización automática cada {BLOCKCHAIN_CONSTANTS.REFRESH_INTERVAL/1000} segundos
           </div>
         </div>
       </div>

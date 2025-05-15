@@ -1,11 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowDownUp } from 'lucide-react';
 import Card from '../common/Card';
-import Button from '../common/Button';
 import TokenInput from '../common/TokenInput';
 import { TokenInfo } from '../../types';
-import { TOKENS, MOCK_PSM_STATS, USDC_TO_VCOP_RATE } from '../../utils/constants';
-import { calculateSwapOutput, formatCurrency, simulateTransaction } from '../../utils/helpers';
+import { TOKENS, MOCK_PSM_STATS } from '../../utils/constants';
+import { formatCurrency } from '../../utils/helpers';
+import { useContractRead } from 'wagmi';
+import { useAccount, useChainId } from 'wagmi';
+import { parseUnits, formatUnits, encodeFunctionData } from 'viem';
+import { 
+  Transaction, 
+  TransactionButton,
+  TransactionStatus,
+  TransactionSponsor,
+  TransactionStatusLabel,
+  TransactionStatusAction,
+  TransactionToast,
+  TransactionToastIcon,
+  TransactionToastLabel,
+  TransactionToastAction
+} from '@coinbase/onchainkit/transaction';
+
+// Import ABIs
+import VCOPCollateralHookABI from '../../Abis/VCOPCollateralHook.json';
+import ERC20ABI from '../../Abis/ERC20.json';
 
 interface SwapInterfaceProps {
   onSwapComplete?: (txHash: string) => void;
@@ -16,28 +34,88 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
   const [toToken, setToToken] = useState<TokenInfo>(TOKENS.VCOP);
   const [fromAmount, setFromAmount] = useState<string>('');
   const [toAmount, setToAmount] = useState<string>('');
-  const [isSwapping, setIsSwapping] = useState<boolean>(false);
   const [needsApproval, setNeedsApproval] = useState<boolean>(true);
-  const [isApproving, setIsApproving] = useState<boolean>(false);
+  const [allowance, setAllowance] = useState<bigint>(BigInt(0));
+  const [showSwapDetails, setShowSwapDetails] = useState<boolean>(false);
+  const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
   
-  // Effect to calculate the swap output
+  // Environment variables
+  const vcopCollateralHookAddress = import.meta.env.VITE_VCOP_COLLATERAL_HOOK_ADDRESS as `0x${string}`;
+  const usdcAddress = import.meta.env.VITE_USDC_ADDRESS as `0x${string}`;
+  const vcopAddress = import.meta.env.VITE_VCOP_ADDRESS as `0x${string}`;
+  
+  // Get connected account and network
+  const { address } = useAccount();
+  const chainId = useChainId();
+  
+  // Read PSM stats from contract
+  const { data: psmStatsResult } = useContractRead({
+    address: vcopCollateralHookAddress,
+    abi: VCOPCollateralHookABI,
+    functionName: 'getPSMStats',
+  });
+  
+  // Read PSM fee from contract
+  const { data: psmFeeData } = useContractRead({
+    address: vcopCollateralHookAddress,
+    abi: VCOPCollateralHookABI,
+    functionName: 'psmFee',
+  });
+  
+  // Read PSM max swap amount from contract
+  const { data: psmMaxSwapAmountData } = useContractRead({
+    address: vcopCollateralHookAddress,
+    abi: VCOPCollateralHookABI,
+    functionName: 'psmMaxSwapAmount',
+  });
+  
+  // Read PSM paused status from contract
+  const { data: psmPausedData } = useContractRead({
+    address: vcopCollateralHookAddress,
+    abi: VCOPCollateralHookABI,
+    functionName: 'psmPaused',
+  });
+  
+  // Contract data calculated values
+  const psmFee = psmFeeData ? Number(psmFeeData as bigint) / 1000000 : MOCK_PSM_STATS.psmFee;
+  const psmMaxSwapAmount = psmMaxSwapAmountData ? Number(formatUnits(psmMaxSwapAmountData as bigint, 6)) : MOCK_PSM_STATS.psmMaxSwapAmount;
+  const isPsmPaused = psmPausedData as boolean ?? false;
+  
+  // Type-safe PSM stats
+  const psmStats = psmStatsResult as unknown as [bigint, bigint, bigint, bigint] | undefined;
+  
+  // Read token allowance when the account or fromToken changes
+  const { data: allowanceData } = useContractRead({
+    address: fromToken.symbol === 'VCOP' ? vcopAddress : usdcAddress,
+    abi: ERC20ABI,
+    functionName: 'allowance',
+    args: address ? [address as `0x${string}`, vcopCollateralHookAddress] : undefined,
+  });
+  
+  // Update allowance when data changes
   useEffect(() => {
-    if (fromAmount) {
-      const parsedAmount = parseFloat(fromAmount);
-      const isVcopToUsdc = fromToken.symbol === 'VCOP';
-      
-      const calculatedOutput = calculateSwapOutput(
-        parsedAmount,
-        USDC_TO_VCOP_RATE,
-        MOCK_PSM_STATS.psmFee,
-        isVcopToUsdc
-      );
-      
-      setToAmount(calculatedOutput.toString());
+    if (allowanceData) {
+      setAllowance(allowanceData as bigint);
+      setNeedsApproval((allowanceData as bigint) < (fromAmount ? parseUnits(fromAmount, 6) : BigInt(0)));
+    }
+  }, [allowanceData, fromAmount]);
+  
+  // Dynamic conversion calculation using contract
+  const { data: conversionResult } = useContractRead({
+    address: vcopCollateralHookAddress,
+    abi: VCOPCollateralHookABI,
+    functionName: fromToken.symbol === 'VCOP' ? 'calculateCollateralForVCOPView' : 'calculateVCOPForCollateralView',
+    args: fromAmount ? [parseUnits(fromAmount, 6)] : undefined,
+  });
+  
+  // Update toAmount when conversion result changes
+  useEffect(() => {
+    if (conversionResult && fromAmount) {
+      setToAmount(formatUnits(conversionResult as bigint, 6));
     } else {
       setToAmount('');
     }
-  }, [fromAmount, fromToken]);
+  }, [conversionResult, fromAmount]);
   
   // Handle token swap direction
   const handleSwitchTokens = () => {
@@ -47,49 +125,74 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
     setToAmount('');
   };
   
-  // Handle approval
-  const handleApprove = async () => {
-    setIsApproving(true);
-    try {
-      await simulateTransaction();
-      setNeedsApproval(false);
-    } catch (error) {
-      console.error('Approval failed:', error);
-    } finally {
-      setIsApproving(false);
-    }
-  };
-  
-  // Handle swap execution
-  const handleSwap = async () => {
-    if (!fromAmount || parseFloat(fromAmount) <= 0) return;
+  // Generate transaction calls for swap
+  const generateSwapCalls = () => {
+    if (!fromAmount || !address) return [];
     
-    setIsSwapping(true);
-    try {
-      const txHash = await simulateTransaction();
-      if (onSwapComplete) {
-        onSwapComplete(txHash);
-      }
+    const amountInWei = parseUnits(fromAmount, 6);
+    
+    if (fromToken.symbol === 'VCOP') {
+      // VCOP to USDC swap
+      const data = encodeFunctionData({
+        abi: VCOPCollateralHookABI,
+        functionName: 'psmSwapVCOPForCollateral',
+        args: [amountInWei]
+      });
       
-      // Reset form
-      setFromAmount('');
-      setToAmount('');
-    } catch (error) {
-      console.error('Swap failed:', error);
-    } finally {
-      setIsSwapping(false);
+      return [{
+        to: vcopCollateralHookAddress,
+        data
+      }];
+    } else {
+      // USDC to VCOP swap
+      const data = encodeFunctionData({
+        abi: VCOPCollateralHookABI,
+        functionName: 'psmSwapCollateralForVCOP',
+        args: [amountInWei]
+      });
+      
+      return [{
+        to: vcopCollateralHookAddress,
+        data
+      }];
     }
   };
   
-  // Calculate price info
-  const getExchangeRateInfo = () => {
-    const isVcopToUsdc = fromToken.symbol === 'VCOP';
+  // Generate approval calls
+  const generateApprovalCalls = () => {
+    if (!fromAmount || !address) return [];
     
-    if (isVcopToUsdc) {
-      return `1 VCOP ≈ ${formatCurrency(1 / USDC_TO_VCOP_RATE, 'USD', 6)}`;
-    } else {
-      return `1 USDC ≈ ${formatCurrency(USDC_TO_VCOP_RATE, 'COP', 2)}`;
+    const amountInWei = parseUnits(fromAmount, 6);
+    const tokenAddress = fromToken.symbol === 'VCOP' ? vcopAddress : usdcAddress;
+    
+    const data = encodeFunctionData({
+      abi: ERC20ABI,
+      functionName: 'approve',
+      args: [vcopCollateralHookAddress, amountInWei]
+    });
+    
+    return [{
+      to: tokenAddress,
+      data
+    }];
+  };
+  
+  // Calculate exchange rate info
+  const getExchangeRateInfo = () => {
+    // Use real data from contract if available
+    if (conversionResult && fromAmount) {
+      const rate = Number(formatUnits(conversionResult as bigint, 6)) / Number(fromAmount);
+      
+      if (fromToken.symbol === 'VCOP') {
+        return `1 VCOP ≈ ${formatCurrency(rate, 'USD', 6)}`;
+      } else {
+        return `1 USDC ≈ ${formatCurrency(rate, 'COP', 2)}`;
+      }
     }
+    
+    return fromToken.symbol === 'VCOP' 
+      ? `1 VCOP ≈ ${formatCurrency(0, 'USD', 6)}`
+      : `1 USDC ≈ ${formatCurrency(0, 'COP', 2)}`;
   };
   
   // Calculate fee amount
@@ -97,11 +200,41 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
     if (!fromAmount || parseFloat(fromAmount) <= 0) return null;
     
     const parsedAmount = parseFloat(fromAmount);
-    const feeAmount = parsedAmount * MOCK_PSM_STATS.psmFee;
+    const feeAmount = parsedAmount * psmFee;
     
     return fromToken.symbol === 'VCOP' 
       ? formatCurrency(feeAmount, 'COP', 0)
       : formatCurrency(feeAmount, 'USD', 2);
+  };
+  
+  // Update transaction status handler
+  const handleTransactionStatus = (status: any) => {
+    console.log('Transaction status:', status);
+    
+    if (status.statusName === 'confirmed') {
+      // Reset form
+      setFromAmount('');
+      setToAmount('');
+      
+      // Add to recent transactions
+      if (status.statusData?.hash) {
+        const newTx = {
+          fromToken: fromToken.symbol,
+          toToken: toToken.symbol,
+          fromAmount: fromAmount,
+          toAmount: toAmount,
+          hash: status.statusData.hash,
+          timestamp: Date.now(),
+          status: 'completed'
+        };
+        
+        setRecentTransactions(prev => [newTx, ...prev].slice(0, 5));
+        
+        if (onSwapComplete) {
+          onSwapComplete(status.statusData.hash);
+        }
+      }
+    }
   };
   
   return (
@@ -144,49 +277,123 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
           </div>
           
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500 dark:text-gray-400">Fee ({MOCK_PSM_STATS.psmFee * 100}%)</span>
+            <span className="text-gray-500 dark:text-gray-400">Fee ({(psmFee * 100).toFixed(2)}%)</span>
             <span className="text-gray-700 dark:text-gray-300">{getFeeInfo() || '-'}</span>
           </div>
           
           <div className="flex justify-between text-sm">
             <span className="text-gray-500 dark:text-gray-400">Max Swap Amount</span>
             <span className="text-gray-700 dark:text-gray-300">
-              {formatCurrency(MOCK_PSM_STATS.psmMaxSwapAmount, 'USD', 0)}
+              {formatCurrency(psmMaxSwapAmount, 'USD', 0)}
             </span>
           </div>
+          
+          {psmStats && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500 dark:text-gray-400">PSM Reserves</span>
+              <span className="text-gray-700 dark:text-gray-300">
+                {formatCurrency(Number(formatUnits(psmStats[1], 6)), 'USD', 2)} USDC / 
+                {formatCurrency(Number(formatUnits(psmStats[0], 6)), 'COP', 0)} VCOP
+              </span>
+            </div>
+          )}
+          
+          {isPsmPaused && (
+            <div className="mt-2 text-center text-red-500 font-medium">
+              ⚠️ PSM is currently paused
+            </div>
+          )}
         </div>
         
         {/* Action Buttons */}
         <div className="space-y-3">
-          {needsApproval && fromToken.symbol === 'USDC' && (
-            <Button
-              variant="outline"
-              onClick={handleApprove}
-              isLoading={isApproving}
-              fullWidth
+          {needsApproval && (
+            <Transaction
+              chainId={chainId}
+              calls={generateApprovalCalls()}
+              onStatus={handleTransactionStatus}
+              isSponsored={true}
             >
-              Approve {fromToken.symbol}
-            </Button>
+              <TransactionButton
+                className="w-full py-2 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg transition-colors font-medium"
+                disabled={
+                  !fromAmount || 
+                  parseFloat(fromAmount) <= 0 || 
+                  parseFloat(fromAmount) > fromToken.balance
+                }
+                text={`Approve ${fromToken.symbol}`}
+              />
+              <TransactionSponsor />
+              <TransactionStatus>
+                <TransactionStatusLabel />
+                <TransactionStatusAction />
+              </TransactionStatus>
+              <TransactionToast>
+                <TransactionToastIcon />
+                <TransactionToastLabel />
+                <TransactionToastAction />
+              </TransactionToast>
+            </Transaction>
           )}
           
-          <Button
-            onClick={handleSwap}
-            isLoading={isSwapping}
-            disabled={
-              !fromAmount || 
-              parseFloat(fromAmount) <= 0 || 
-              parseFloat(fromAmount) > fromToken.balance ||
-              (needsApproval && fromToken.symbol === 'USDC')
-            }
-            fullWidth
+          <Transaction
+            chainId={chainId}
+            calls={generateSwapCalls()}
+            onStatus={handleTransactionStatus}
+            isSponsored={true}
           >
-            {!fromAmount || parseFloat(fromAmount) <= 0
-              ? 'Enter an amount'
-              : parseFloat(fromAmount) > fromToken.balance
-              ? 'Insufficient balance'
-              : `Swap ${fromToken.symbol} to ${toToken.symbol}`}
-          </Button>
+            <TransactionButton
+              className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+              disabled={
+                !fromAmount || 
+                parseFloat(fromAmount) <= 0 || 
+                parseFloat(fromAmount) > fromToken.balance ||
+                needsApproval ||
+                isPsmPaused
+              }
+              text={
+                !fromAmount || parseFloat(fromAmount) <= 0
+                  ? 'Enter an amount'
+                  : parseFloat(fromAmount) > fromToken.balance
+                  ? 'Insufficient balance'
+                  : isPsmPaused
+                  ? 'PSM is paused'
+                  : `Swap ${fromToken.symbol} to ${toToken.symbol}`
+              }
+            />
+            <TransactionSponsor />
+            <TransactionStatus>
+              <TransactionStatusLabel />
+              <TransactionStatusAction />
+            </TransactionStatus>
+            <TransactionToast>
+              <TransactionToastIcon />
+              <TransactionToastLabel />
+              <TransactionToastAction />
+            </TransactionToast>
+          </Transaction>
         </div>
+        
+        {/* Recent Transactions */}
+        {recentTransactions.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Recent Transactions</h3>
+            <div className="space-y-2">
+              {recentTransactions.map((tx, index) => (
+                <div key={index} className="flex justify-between items-center text-sm">
+                  <div className="flex items-center">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {tx.fromToken} to {tx.toToken}
+                    </span>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded ${tx.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'}`}>
+                    {tx.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </Card>
   );

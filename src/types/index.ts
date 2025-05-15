@@ -3,6 +3,7 @@ export interface TokenInfo {
   name: string;
   balance: number;
   icon: string;
+  decimals: number;
 }
 
 export interface Transaction {

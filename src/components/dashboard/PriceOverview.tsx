@@ -3,6 +3,7 @@ import Card from '../common/Card';
 import PriceIndicator from '../common/PriceIndicator';
 import { PriceData } from '../../types';
 import { callReadFunction } from '../../utils/blockchain';
+import { CONTRACT_ADDRESSES, BLOCKCHAIN_CONSTANTS } from '../../utils/constants';
 
 const VCOPPriceCalculatorABI = [
   {
@@ -26,7 +27,8 @@ const VCOPPriceCalculatorABI = [
   }
 ];
 
-const CONTRACT_ADDRESS = "0x999653EEb3F93f50e9628Ddb65754540A20Af690";
+// Cargar dirección del contrato desde las constantes
+const CONTRACT_ADDRESS = CONTRACT_ADDRESSES.PRICE_CALCULATOR;
 
 interface PriceOverviewProps {
   priceData?: PriceData; // Make optional since we'll fetch it from the contract
@@ -58,9 +60,6 @@ const PriceOverview: React.FC<PriceOverviewProps> = ({ priceData: propsPriceData
         'usdToCopRate',
         []
       );
-      
-      console.log('Raw price info from contract:', priceInfo);
-      console.log('Raw target rate from contract:', targetRate);
       
       // Safely extract values - contract might return array or object depending on provider
       let vcopToUsdPrice, vcopToCopPrice, currentTick, isAtParity;
@@ -103,8 +102,6 @@ const PriceOverview: React.FC<PriceOverviewProps> = ({ priceData: propsPriceData
         tick: Number(currentTick || 0),
       };
       
-      console.log('Processed price data:', newPriceData);
-      
       setPriceData(newPriceData);
       setError(null);
     } catch (err) {
@@ -118,8 +115,8 @@ const PriceOverview: React.FC<PriceOverviewProps> = ({ priceData: propsPriceData
   useEffect(() => {
     fetchPriceData();
     
-    // Set up polling to refresh data every 10 seconds
-    const interval = setInterval(fetchPriceData, 10000);
+    // Set up polling to refresh data using the constant interval
+    const interval = setInterval(fetchPriceData, BLOCKCHAIN_CONSTANTS.REFRESH_INTERVAL);
     
     return () => clearInterval(interval);
   }, []);
@@ -224,7 +221,7 @@ const PriceOverview: React.FC<PriceOverviewProps> = ({ priceData: propsPriceData
                   Actualizando...
                 </span>
               ) : (
-                <span>Actualización automática cada 10s</span>
+                <span>Actualización automática cada {BLOCKCHAIN_CONSTANTS.REFRESH_INTERVAL/1000}s</span>
               )}
             </div>
             <div>

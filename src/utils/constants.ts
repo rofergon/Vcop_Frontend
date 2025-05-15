@@ -1,16 +1,21 @@
+// Import types
+import { Transaction, ReserveData, PriceData, PSMStats } from '../types';
+
 // Mock data constants
 export const TOKENS = {
   VCOP: {
     symbol: 'VCOP',
     name: 'Virtual Colombian Peso',
     balance: 2450.75,
-    icon: '🇨🇴'
+    icon: '🇨🇴',
+    decimals: 6
   },
   USDC: {
     symbol: 'USDC',
     name: 'USD Coin',
     balance: 543.21,
-    icon: '💵'
+    icon: '💵',
+    decimals: 6
   }
 };
 
@@ -58,8 +63,9 @@ export const MOCK_RESERVE_DATA: ReserveData = {
 
 export const MOCK_PRICE_DATA: PriceData = {
   price: 4295.0,
-  change24h: -0.05,
-  isPegHealthy: true
+  change: -0.05,
+  isPegHealthy: true,
+  deviation: 0.01
 };
 
 export const MOCK_PSM_STATS: PSMStats = {
@@ -74,5 +80,25 @@ export const USDC_TO_VCOP_RATE = 4295;
 export const ONE_DAY_MS = 86400000;
 export const ONE_HOUR_MS = 3600000;
 
-// Import types
-import { Transaction } from '../types';
+// Contract addresses from .env
+export const CONTRACT_ADDRESSES = {
+  USDC: import.meta.env.VITE_USDC_ADDRESS || '0xE5964b67F1F121A54da973652F4B839C4F453Ca6',
+  VCOP: import.meta.env.VITE_VCOP_ADDRESS || '0xd1F263942EE26d34B56f50F05D59E84b10FF9fD1',
+  RESERVE: import.meta.env.VITE_RESERVE_ADDRESS || '0xd447ef9ab1dcc346a57ecdab27f02c20e6d2dbf6',
+  PRICE_CALCULATOR: import.meta.env.VITE_VCOP_PRICE_CALCULATOR_ADDRESS || '0x999653EEb3F93f50e9628Ddb65754540A20Af690',
+  VCOP_COLLATERAL_MANAGER: import.meta.env.VITE_VCOP_COLLATERAL_MANAGER_ADDRESS || '0x2D644FC74e5fe6598b0843f149b02bFEf99Ef383',
+};
+
+// Chain configuration
+export const CHAIN_CONFIG = {
+  RPC_URL: 'https://sepolia.base.org',
+  CHAIN_ID: 84531, // Base Sepolia
+  EXPLORER_URL: 'https://sepolia.basescan.org',
+};
+
+// Blockchain constants
+export const BLOCKCHAIN_CONSTANTS = {
+  CONVERSION_RATE: 4295, // 1 USDC = 4295 VCOP (Colombian Peso rate)
+  REFRESH_INTERVAL: 10000, // Refresh blockchain data every 10 seconds
+  TOKEN_DECIMALS: 6, // Both USDC and VCOP have 6 decimals
+};

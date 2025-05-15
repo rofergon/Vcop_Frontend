@@ -8,111 +8,281 @@
     "type": "constructor"
   },
   {
-    "inputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-    "name": "collateralList",
-    "outputs": [{"internalType": "address", "name": "", "type": "address"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [{"internalType": "address", "name": "", "type": "address"}],
-    "name": "collaterals",
-    "outputs": [
-      {"internalType": "address", "name": "token", "type": "address"},
-      {"internalType": "uint256", "name": "ratio", "type": "uint256"},
-      {"internalType": "uint256", "name": "mintFee", "type": "uint256"},
-      {"internalType": "uint256", "name": "burnFee", "type": "uint256"},
-      {"internalType": "uint256", "name": "liquidationThreshold", "type": "uint256"},
-      {"internalType": "bool", "name": "active", "type": "bool"}
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "ratio",
+        "type": "uint256"
+      }
     ],
-    "stateMutability": "view",
-    "type": "function"
+    "name": "CollateralAdded",
+    "type": "event"
   },
   {
-    "inputs": [],
-    "name": "feeCollector",
-    "outputs": [{"internalType": "address", "name": "", "type": "address"}],
-    "stateMutability": "view",
-    "type": "function"
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "positionId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "CollateralDeposited",
+    "type": "event"
   },
   {
-    "inputs": [],
-    "name": "lastPSMOperationTimestamp",
-    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-    "stateMutability": "view",
-    "type": "function"
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "CollateralRemoved",
+    "type": "event"
   },
   {
-    "inputs": [],
-    "name": "oracle",
-    "outputs": [{"internalType": "contract VCOPOracle", "name": "", "type": "address"}],
-    "stateMutability": "view",
-    "type": "function"
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "positionId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "CollateralWithdrawn",
+    "type": "event"
   },
   {
-    "inputs": [{"internalType": "address", "name": "", "type": "address"}],
-    "name": "positionCount",
-    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-    "stateMutability": "view",
-    "type": "function"
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "positionId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "collateralAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "vcopMinted",
+        "type": "uint256"
+      }
+    ],
+    "name": "PositionCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "positionId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "liquidator",
+        "type": "address"
+      }
+    ],
+    "name": "PositionLiquidated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "PSMReserveAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "PSMReserveRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "active",
+        "type": "bool"
+      }
+    ],
+    "name": "PSMStatusChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "PSMCollateralTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "VCOPBurned",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "VCOPMinted",
+    "type": "event"
   },
   {
     "inputs": [
-      {"internalType": "address", "name": "", "type": "address"},
-      {"internalType": "uint256", "name": "", "type": "uint256"}
-    ],
-    "name": "positions",
-    "outputs": [
-      {"internalType": "address", "name": "collateralToken", "type": "address"},
-      {"internalType": "uint256", "name": "collateralAmount", "type": "uint256"},
-      {"internalType": "uint256", "name": "vcopMinted", "type": "uint256"}
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "psmHookAddress",
-    "outputs": [{"internalType": "address", "name": "", "type": "address"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [{"internalType": "address", "name": "", "type": "address"}],
-    "name": "psmReserves",
-    "outputs": [
-      {"internalType": "uint256", "name": "collateralAmount", "type": "uint256"},
-      {"internalType": "uint256", "name": "vcopAmount", "type": "uint256"},
-      {"internalType": "bool", "name": "active", "type": "bool"}
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [{"internalType": "address", "name": "", "type": "address"}],
-    "name": "tokenIdentifiers",
-    "outputs": [{"internalType": "string", "name": "", "type": "string"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalPSMSwapsCount",
-    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "vcop",
-    "outputs": [{"internalType": "contract VCOPCollateralized", "name": "", "type": "address"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {"internalType": "uint256", "name": "positionId", "type": "uint256"},
-      {"internalType": "uint256", "name": "amount", "type": "uint256"}
+      {
+        "internalType": "uint256",
+        "name": "positionId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
     ],
     "name": "addCollateral",
     "outputs": [],
@@ -121,8 +291,16 @@
   },
   {
     "inputs": [
-      {"internalType": "address", "name": "collateralToken", "type": "address"},
-      {"internalType": "uint256", "name": "amount", "type": "uint256"}
+      {
+        "internalType": "address",
+        "name": "collateralToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
     ],
     "name": "addPSMFunds",
     "outputs": [],
@@ -131,8 +309,16 @@
   },
   {
     "inputs": [
-      {"internalType": "address", "name": "collateralToken", "type": "address"},
-      {"internalType": "uint256", "name": "amount", "type": "uint256"}
+      {
+        "internalType": "address",
+        "name": "collateralToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
     ],
     "name": "addPSMVcop",
     "outputs": [],
@@ -141,12 +327,99 @@
   },
   {
     "inputs": [
-      {"internalType": "address", "name": "token", "type": "address"},
-      {"internalType": "uint256", "name": "ratio", "type": "uint256"},
-      {"internalType": "uint256", "name": "mintFee", "type": "uint256"},
-      {"internalType": "uint256", "name": "burnFee", "type": "uint256"},
-      {"internalType": "uint256", "name": "liquidationThreshold", "type": "uint256"},
-      {"internalType": "bool", "name": "active", "type": "bool"}
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "collateralList",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "collaterals",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "ratio",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "mintFee",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "burnFee",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "liquidationThreshold",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "active",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "ratio",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "mintFee",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "burnFee",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "liquidationThreshold",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "active",
+        "type": "bool"
+      }
     ],
     "name": "configureCollateral",
     "outputs": [],
@@ -155,9 +428,21 @@
   },
   {
     "inputs": [
-      {"internalType": "address", "name": "collateralToken", "type": "address"},
-      {"internalType": "uint256", "name": "collateralAmount", "type": "uint256"},
-      {"internalType": "uint256", "name": "vcopToMint", "type": "uint256"}
+      {
+        "internalType": "address",
+        "name": "collateralToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "collateralAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "vcopToMint",
+        "type": "uint256"
+      }
     ],
     "name": "createPosition",
     "outputs": [],
@@ -165,82 +450,234 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {"internalType": "address", "name": "user", "type": "address"},
-      {"internalType": "uint256", "name": "positionId", "type": "uint256"}
+    "inputs": [],
+    "name": "feeCollector",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
     ],
-    "name": "getCurrentCollateralRatio",
-    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
-      {"internalType": "address", "name": "collateralToken", "type": "address"},
-      {"internalType": "uint256", "name": "value", "type": "uint256"}
+      {
+        "internalType": "address",
+        "name": "collateralToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      }
     ],
     "name": "getCollateralAmountForValue",
-    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
-      {"internalType": "address", "name": "collateralToken", "type": "address"},
-      {"internalType": "uint256", "name": "amount", "type": "uint256"}
+      {
+        "internalType": "address",
+        "name": "collateralToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
     ],
     "name": "getCollateralValue",
-    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
-      {"internalType": "address", "name": "collateralToken", "type": "address"},
-      {"internalType": "uint256", "name": "amount", "type": "uint256"}
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "positionId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getCurrentCollateralRatio",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "collateralToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
     ],
     "name": "getMaxVCOPforCollateral",
-    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
-      {"internalType": "address", "name": "collateralToken", "type": "address"},
-      {"internalType": "uint256", "name": "vcopAmount", "type": "uint256"}
+      {
+        "internalType": "address",
+        "name": "collateralToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "vcopAmount",
+        "type": "uint256"
+      }
     ],
     "name": "getMinCollateralForVCOP",
-    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
-      {"internalType": "address", "name": "collateralToken", "type": "address"}
+      {
+        "internalType": "address",
+        "name": "collateralToken",
+        "type": "address"
+      }
     ],
     "name": "getPSMReserves",
     "outputs": [
-      {"internalType": "uint256", "name": "collateralAmount", "type": "uint256"},
-      {"internalType": "uint256", "name": "vcopAmount", "type": "uint256"},
-      {"internalType": "bool", "name": "active", "type": "bool"}
+      {
+        "internalType": "uint256",
+        "name": "collateralAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "vcopAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "active",
+        "type": "bool"
+      }
     ],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
-      {"internalType": "address", "name": "collateralToken", "type": "address"},
-      {"internalType": "uint256", "name": "amount", "type": "uint256"}
+      {
+        "internalType": "address",
+        "name": "collateralToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
     ],
     "name": "hasPSMReservesFor",
-    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
-      {"internalType": "address", "name": "user", "type": "address"},
-      {"internalType": "uint256", "name": "positionId", "type": "uint256"}
+      {
+        "internalType": "address",
+        "name": "collateralToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "initializePSMVcop",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "lastPSMOperationTimestamp",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "positionId",
+        "type": "uint256"
+      }
     ],
     "name": "liquidatePosition",
     "outputs": [],
@@ -249,9 +686,21 @@
   },
   {
     "inputs": [
-      {"internalType": "address", "name": "to", "type": "address"},
-      {"internalType": "address", "name": "collateralToken", "type": "address"},
-      {"internalType": "uint256", "name": "amount", "type": "uint256"}
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "collateralToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
     ],
     "name": "mintPSMVcop",
     "outputs": [],
@@ -259,9 +708,143 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "oracle",
+    "outputs": [
+      {
+        "internalType": "contract VCOPOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
-      {"internalType": "address", "name": "token", "type": "address"},
-      {"internalType": "string", "name": "identifier", "type": "string"}
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "positionCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "positions",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "collateralToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "collateralAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "vcopMinted",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "psmHookAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "psmReserves",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "collateralAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "vcopAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "active",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "collateralToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "registerPSMFunds",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "identifier",
+        "type": "string"
+      }
     ],
     "name": "registerTokenIdentifier",
     "outputs": [],
@@ -270,8 +853,16 @@
   },
   {
     "inputs": [
-      {"internalType": "address", "name": "collateralToken", "type": "address"},
-      {"internalType": "uint256", "name": "amount", "type": "uint256"}
+      {
+        "internalType": "address",
+        "name": "collateralToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
     ],
     "name": "removePSMFunds",
     "outputs": [],
@@ -280,8 +871,16 @@
   },
   {
     "inputs": [
-      {"internalType": "uint256", "name": "positionId", "type": "uint256"},
-      {"internalType": "uint256", "name": "vcpAmount", "type": "uint256"}
+      {
+        "internalType": "uint256",
+        "name": "positionId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "vcpAmount",
+        "type": "uint256"
+      }
     ],
     "name": "repayDebt",
     "outputs": [],
@@ -290,7 +889,11 @@
   },
   {
     "inputs": [
-      {"internalType": "address", "name": "_collector", "type": "address"}
+      {
+        "internalType": "address",
+        "name": "_collector",
+        "type": "address"
+      }
     ],
     "name": "setFeeCollector",
     "outputs": [],
@@ -299,7 +902,11 @@
   },
   {
     "inputs": [
-      {"internalType": "address", "name": "_psmHook", "type": "address"}
+      {
+        "internalType": "address",
+        "name": "_psmHook",
+        "type": "address"
+      }
     ],
     "name": "setPSMHook",
     "outputs": [],
@@ -308,8 +915,16 @@
   },
   {
     "inputs": [
-      {"internalType": "address", "name": "collateralToken", "type": "address"},
-      {"internalType": "bool", "name": "active", "type": "bool"}
+      {
+        "internalType": "address",
+        "name": "collateralToken",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "active",
+        "type": "bool"
+      }
     ],
     "name": "setPSMReserveStatus",
     "outputs": [],
@@ -318,9 +933,53 @@
   },
   {
     "inputs": [
-      {"internalType": "address", "name": "to", "type": "address"},
-      {"internalType": "address", "name": "collateralToken", "type": "address"},
-      {"internalType": "uint256", "name": "amount", "type": "uint256"}
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "tokenIdentifiers",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalPSMSwapsCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "collateralToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
     ],
     "name": "transferPSMCollateral",
     "outputs": [],
@@ -328,9 +987,30 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "vcop",
+    "outputs": [
+      {
+        "internalType": "contract VCOPCollateralized",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
-      {"internalType": "uint256", "name": "positionId", "type": "uint256"},
-      {"internalType": "uint256", "name": "amount", "type": "uint256"}
+      {
+        "internalType": "uint256",
+        "name": "positionId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
     ],
     "name": "withdrawCollateral",
     "outputs": [],
