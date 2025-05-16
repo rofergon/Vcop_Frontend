@@ -1,206 +1,166 @@
-import React, { useState, useEffect } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import { useAccount, useContractRead } from 'wagmi';
+import { baseSepolia } from 'viem/chains';
+import { 
+  Transaction, 
+  TransactionButton,
+  TransactionSponsor,
+  TransactionStatus,
+  TransactionStatusAction,
+  TransactionStatusLabel,
+  TransactionToast,
+  type LifecycleStatus 
+} from '@coinbase/onchainkit/transaction';
+import { createLoanCalls } from '../../calls';
 
-// Mock collateral types for demonstration
-const COLLATERAL_TYPES = [
-  { id: 'usdc', name: 'USDC', minRatio: 1.05, fee: 0.001 },
-  { id: 'eth', name: 'ETH', minRatio: 1.20, fee: 0.002 },
-  { id: 'wbtc', name: 'WBTC', minRatio: 1.15, fee: 0.0015 }
+// ABI for reading max collateral
+const COLLATERAL_MANAGER_ABI = [
+  {
+    name: 'getMaxVCOPforCollateral',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'collateralToken', type: 'address' },
+      { name: 'amount', type: 'uint256' }
+    ],
+    outputs: [{ name: '', type: 'uint256' }]
+  }
 ];
 
-// Mock exchange rates
-const EXCHANGE_RATES = {
-  usdc: 4000, // 1 USDC = 4000 COP
-  eth: 8000000, // 1 ETH = 8,000,000 COP
-  wbtc: 120000000 // 1 WBTC = 120,000,000 COP
-};
+export default function CreatePosition() {
+  const { address } = useAccount();
+  const [collateralAmount, setCollateralAmount] = useState('100');
+  const [vcopAmount, setVcopAmount] = useState('0');
+  const [utilizationRate, setUtilizationRate] = useState(80); // Percentage of max to use
+  
+  // Contract addresses from environment variables
+  const collateralManagerAddress = import.meta.env.VITE_VCOP_COLLATERAL_MANAGER_ADDRESS;
+  const usdcAddress = import.meta.env.VITE_USDC_ADDRESS;
+  
+  // Parse collateral amount for contract read
+  const parsedCollateral = BigInt(
+    parseFloat(collateralAmount || '0') * 10 ** 6
+  );
+  
+  // Get max VCOP that can be minted with provided collateral
+  const { data: maxVcop, refetch } = useContractRead({
+    address: collateralManagerAddress as `0x${string}`,
+    abi: COLLATERAL_MANAGER_ABI,
+    functionName: 'getMaxVCOPforCollateral',
+    args: [usdcAddress as `0x${string}`, parsedCollateral],
+    query: {
+      enabled: !!address && !!collateralManagerAddress && !!usdcAddress && parsedCollateral > 0n,
+    }
+  });
 
-const CreatePosition: React.FC = () => {
-  const [selectedCollateral, setSelectedCollateral] = useState(COLLATERAL_TYPES[0]);
-  const [collateralAmount, setCollateralAmount] = useState<string>('');
-  const [vcopAmount, setVcopAmount] = useState<string>('');
-  const [collateralRatio, setCollateralRatio] = useState<number>(0);
-  const [maxVcopPossible, setMaxVcopPossible] = useState<number>(0);
-  const [fees, setFees] = useState<number>(0);
-  const [isRatioSafe, setIsRatioSafe] = useState<boolean>(true);
-
-  // Calculate max VCOP and collateral ratio when inputs change
+  // Update VCOP amount when collateral amount or utilization rate changes
   useEffect(() => {
-    if (collateralAmount && parseFloat(collateralAmount) > 0) {
-      const collateralValue = parseFloat(collateralAmount) * EXCHANGE_RATES[selectedCollateral.id as keyof typeof EXCHANGE_RATES];
-      const safeMaxVcop = collateralValue / (selectedCollateral.minRatio + 0.05);
-      setMaxVcopPossible(safeMaxVcop);
-      
-      if (vcopAmount && parseFloat(vcopAmount) > 0) {
-        const currentRatio = collateralValue / parseFloat(vcopAmount);
-        setCollateralRatio(currentRatio);
-        setIsRatioSafe(currentRatio >= selectedCollateral.minRatio);
-        
-        // Calculate fee
-        const mintFee = parseFloat(vcopAmount) * selectedCollateral.fee;
-        setFees(mintFee);
-      } else {
-        setCollateralRatio(0);
-        setFees(0);
-      }
-    } else {
-      setMaxVcopPossible(0);
-      setCollateralRatio(0);
-      setFees(0);
+    if (maxVcop) {
+      const maxAmount = Number(maxVcop) / 10 ** 6;
+      const calculatedAmount = (maxAmount * utilizationRate) / 100;
+      setVcopAmount(calculatedAmount.toFixed(2));
     }
-  }, [collateralAmount, vcopAmount, selectedCollateral]);
+  }, [maxVcop, utilizationRate]);
 
-  const handleCollateralTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selected = COLLATERAL_TYPES.find(type => type.id === e.target.value);
-    if (selected) {
-      setSelectedCollateral(selected);
+  // Refetch when collateral amount changes
+  useEffect(() => {
+    if (address && collateralAmount && parseFloat(collateralAmount) > 0) {
+      refetch();
     }
+  }, [address, collateralAmount, refetch]);
+
+  // Handle utilization slider change
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUtilizationRate(Number(e.target.value));
   };
 
-  const handleCollateralAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value === '' || /^\d*\.?\d*$/.test(value)) {
-      setCollateralAmount(value);
-    }
-  };
+  // Handle transaction status changes
+  const handleStatusChange = useCallback((status: LifecycleStatus) => {
+    console.log('Transaction status:', status);
+  }, []);
 
-  const handleVcopAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value === '' || /^\d*\.?\d*$/.test(value)) {
-      setVcopAmount(value);
-    }
-  };
+  // Handle successful transaction
+  const handleTransactionSuccess = useCallback(() => {
+    // Reset form
+    setCollateralAmount('100');
+    setVcopAmount('0');
+  }, []);
 
-  const handleMaxVcop = () => {
-    setVcopAmount(maxVcopPossible.toFixed(0));
-  };
+  // Prepare contract calls
+  const getCalls = useCallback(async () => {
+    return createLoanCalls(collateralAmount, vcopAmount);
+  }, [collateralAmount, vcopAmount]);
 
-  const handleCreatePosition = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert('Esta funcionalidad estaría conectada al smart contract');
-    // Here would go the interaction with the blockchain
-  };
+  // Calculate current collateralization ratio
+  const collateralizationRatio = maxVcop && Number(vcopAmount) > 0
+    ? (parsedCollateral * 100n / BigInt(Number(vcopAmount) * 10 ** 6)).toString()
+    : "N/A";
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">Crear Nueva Posición</h2>
+    <div className="p-6 max-w-md mx-auto bg-white rounded-xl shadow-md">
+      <h2 className="text-xl font-bold mb-4">Create VCOP Loan</h2>
       
-      <form onSubmit={handleCreatePosition}>
-        <div className="mb-4">
-          <label className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
-            Tipo de Colateral
-          </label>
-          <select
-            value={selectedCollateral.id}
-            onChange={handleCollateralTypeChange}
-            className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {COLLATERAL_TYPES.map((type) => (
-              <option key={type.id} value={type.id}>
-                {type.name} (Ratio min: {type.minRatio.toFixed(2)}x)
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
-            Cantidad de Colateral ({selectedCollateral.name})
-          </label>
-          <input
-            type="text"
-            value={collateralAmount}
-            onChange={handleCollateralAmountChange}
-            placeholder={`Cantidad en ${selectedCollateral.name}`}
-            className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-2">
-            <label className="block text-gray-700 dark:text-gray-300 text-sm font-medium">
-              Cantidad de VCOP a acuñar
-            </label>
-            {maxVcopPossible > 0 && (
-              <button 
-                type="button"
-                onClick={handleMaxVcop}
-                className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-              >
-                Max seguro: {maxVcopPossible.toLocaleString(undefined, {maximumFractionDigits: 0})}
-              </button>
-            )}
-          </div>
-          <input
-            type="text"
-            value={vcopAmount}
-            onChange={handleVcopAmountChange}
-            placeholder="Cantidad en VCOP"
-            className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        
-        {/* Collateral Ratio Indicator */}
-        {collateralRatio > 0 && (
-          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-md">
-            <div className="flex justify-between mb-1">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Ratio de Colateralización</span>
-              <span className={`text-sm font-medium ${isRatioSafe ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                {collateralRatio.toFixed(2)}x
-              </span>
-            </div>
-            
-            <div className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-full">
-              <div 
-                className={`h-full rounded-full ${isRatioSafe ? 'bg-green-500' : 'bg-red-500'}`}
-                style={{ 
-                  width: `${Math.min(100, (collateralRatio / (selectedCollateral.minRatio * 1.5)) * 100)}%` 
-                }}
-              />
-            </div>
-            
-            <div className="mt-2">
-              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                <span>Mínimo: {selectedCollateral.minRatio.toFixed(2)}x</span>
-                <span>Recomendado: {(selectedCollateral.minRatio * 1.2).toFixed(2)}x</span>
-              </div>
-            </div>
-            
-            {!isRatioSafe && (
-              <div className="mt-2 flex items-start text-sm text-red-600 dark:text-red-400">
-                <AlertCircle size={16} className="mr-1 mt-0.5 flex-shrink-0" />
-                <span>La ratio está por debajo del mínimo requerido y podría ser liquidada.</span>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* Fee Information */}
-        {fees > 0 && (
-          <div className="mb-6">
-            <div className="text-sm text-gray-700 dark:text-gray-300">
-              <div className="flex justify-between mb-1">
-                <span>Comisión de acuñado ({(selectedCollateral.fee * 100).toFixed(2)}%)</span>
-                <span>{fees.toLocaleString(undefined, {maximumFractionDigits: 2})} VCOP</span>
-              </div>
-              <div className="flex justify-between font-medium">
-                <span>VCOP total a recibir</span>
-                <span>{(parseFloat(vcopAmount) - fees).toLocaleString(undefined, {maximumFractionDigits: 2})} VCOP</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={!isRatioSafe || !collateralAmount || !vcopAmount || parseFloat(collateralAmount) <= 0 || parseFloat(vcopAmount) <= 0}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-md transition"
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700">USDC Collateral Amount</label>
+        <input
+          type="number"
+          value={collateralAmount}
+          onChange={(e) => setCollateralAmount(e.target.value)}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          min="1"
+          step="0.01"
+        />
+      </div>
+      
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700">
+          Utilization Rate: {utilizationRate}%
+        </label>
+        <input
+          type="range"
+          min="50"
+          max="95"
+          value={utilizationRate}
+          onChange={handleSliderChange}
+          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+        />
+        <p className="text-sm text-gray-500 mt-1">
+          Lower utilization rate = safer position but less efficient.
+        </p>
+      </div>
+      
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700">VCOP to Receive</label>
+        <input
+          type="text"
+          value={vcopAmount}
+          readOnly
+          className="mt-1 block w-full rounded-md bg-gray-100 border-gray-300 shadow-sm"
+        />
+        <p className="text-sm text-gray-500 mt-1">
+          Collateralization Ratio: {collateralizationRatio}% 
+          (minimum recommended: 150%)
+        </p>
+      </div>
+      
+      {address ? (
+        <Transaction 
+          chainId={baseSepolia.id} 
+          calls={getCalls}
+          onStatus={handleStatusChange}
+          onSuccess={handleTransactionSuccess}
         >
-          Crear Posición
-        </button>
-      </form>
+          <TransactionButton className="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700" text="Create Loan" />
+          <TransactionSponsor />
+          <TransactionStatus>
+            <TransactionStatusLabel />
+            <TransactionStatusAction />
+          </TransactionStatus>
+          <TransactionToast />
+        </Transaction>
+      ) : (
+        <p className="text-center text-red-500">Connect your wallet to continue</p>
+      )}
     </div>
   );
-};
-
-export default CreatePosition; 
+} 

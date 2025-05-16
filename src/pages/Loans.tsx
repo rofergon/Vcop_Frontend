@@ -1,11 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import CollateralPositions from '../components/loans/CollateralPositions';
 import CreatePosition from '../components/loans/CreatePosition';
 import ManagePosition from '../components/loans/ManagePosition';
 import MarketInfo from '../components/loans/MarketInfo';
 import AnalyticsPanel from '../components/loans/AnalyticsPanel';
+import PSMSwap from '../components/loans/PSMSwap';
 
 const Loans: React.FC = () => {
+  const [selectedPositionId, setSelectedPositionId] = useState<number | undefined>(undefined);
+  const [activeTab, setActiveTab] = useState<'create' | 'manage' | 'swap'>('create');
+
+  // Handle position selection
+  const handleSelectPosition = (id: number) => {
+    setSelectedPositionId(id);
+    setActiveTab('manage');
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-12 text-center">
@@ -25,21 +35,58 @@ const Loans: React.FC = () => {
         
         {/* Collateral Positions Overview */}
         <div className="lg:col-span-7">
-          <CollateralPositions />
+          <CollateralPositions onSelectPosition={handleSelectPosition} />
         </div>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
-        {/* Create Position Interface */}
-        <div className="lg:col-span-5 flex justify-center">
-          <div className="w-full max-w-md">
-            <CreatePosition />
-          </div>
+        {/* Tab navigation */}
+        <div className="lg:col-span-12 flex border-b mb-6">
+          <button
+            className={`py-2 px-4 font-medium ${
+              activeTab === 'create' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'
+            }`}
+            onClick={() => setActiveTab('create')}
+          >
+            Create Position
+          </button>
+          <button
+            className={`py-2 px-4 font-medium ${
+              activeTab === 'manage' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'
+            }`}
+            onClick={() => setActiveTab('manage')}
+          >
+            Manage Position
+          </button>
+          <button
+            className={`py-2 px-4 font-medium ${
+              activeTab === 'swap' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'
+            }`}
+            onClick={() => setActiveTab('swap')}
+          >
+            PSM Swap
+          </button>
         </div>
         
-        {/* Manage Position */}
-        <div className="lg:col-span-7">
-          <ManagePosition />
+        {/* Tab content */}
+        <div className="lg:col-span-12">
+          {activeTab === 'create' && (
+            <div className="max-w-md mx-auto">
+              <CreatePosition />
+            </div>
+          )}
+          
+          {activeTab === 'manage' && (
+            <div className="max-w-md mx-auto">
+              <ManagePosition positionId={selectedPositionId} />
+            </div>
+          )}
+          
+          {activeTab === 'swap' && (
+            <div className="max-w-md mx-auto">
+              <PSMSwap />
+            </div>
+          )}
         </div>
       </div>
       

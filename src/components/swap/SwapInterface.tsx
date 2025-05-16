@@ -30,8 +30,14 @@ interface SwapInterfaceProps {
 }
 
 const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
-  const [fromToken, setFromToken] = useState<TokenInfo>(TOKENS.USDC);
-  const [toToken, setToToken] = useState<TokenInfo>(TOKENS.VCOP);
+  // Initialize with default token info from constants
+  const initialTokens = {
+    USDC: { ...TOKENS.USDC, balance: 0 },
+    VCOP: { ...TOKENS.VCOP, balance: 0 }
+  };
+  
+  const [fromToken, setFromToken] = useState<TokenInfo>(initialTokens.USDC);
+  const [toToken, setToToken] = useState<TokenInfo>(initialTokens.VCOP);
   const [fromAmount, setFromAmount] = useState<string>('');
   const [toAmount, setToAmount] = useState<string>('');
   const [needsApproval, setNeedsApproval] = useState<boolean>(true);
@@ -47,6 +53,70 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
   // Get connected account and network
   const { address } = useAccount();
   const chainId = useChainId();
+  
+  // Read USDC balance from contract
+  const { data: usdcBalanceData, refetch: refetchUsdcBalance } = useContractRead({
+    address: usdcAddress,
+    abi: ERC20ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+  });
+  
+  // Read VCOP balance from contract
+  const { data: vcopBalanceData, refetch: refetchVcopBalance } = useContractRead({
+    address: vcopAddress,
+    abi: ERC20ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+  });
+  
+  // Update token balances when data changes
+  useEffect(() => {
+    if (usdcBalanceData) {
+      const usdcBalance = Number(formatUnits(usdcBalanceData as bigint, 6));
+      setFromToken(prev => 
+        prev.symbol === 'USDC' 
+          ? { ...prev, balance: usdcBalance } 
+          : prev
+      );
+      setToToken(prev => 
+        prev.symbol === 'USDC' 
+          ? { ...prev, balance: usdcBalance } 
+          : prev
+      );
+    }
+    
+    if (vcopBalanceData) {
+      const vcopBalance = Number(formatUnits(vcopBalanceData as bigint, 6));
+      setFromToken(prev => 
+        prev.symbol === 'VCOP' 
+          ? { ...prev, balance: vcopBalance } 
+          : prev
+      );
+      setToToken(prev => 
+        prev.symbol === 'VCOP' 
+          ? { ...prev, balance: vcopBalance } 
+          : prev
+      );
+    }
+  }, [usdcBalanceData, vcopBalanceData]);
+  
+  // Refresh balances periodically and after transactions
+  useEffect(() => {
+    if (address) {
+      // Initial fetch
+      refetchUsdcBalance();
+      refetchVcopBalance();
+      
+      // Set up refresh interval
+      const intervalId = setInterval(() => {
+        refetchUsdcBalance();
+        refetchVcopBalance();
+      }, 15000); // Refresh every 15 seconds
+      
+      return () => clearInterval(intervalId);
+    }
+  }, [address, refetchUsdcBalance, refetchVcopBalance]);
   
   // Read PSM stats from contract
   const { data: psmStatsResult } = useContractRead({
@@ -83,6 +153,18 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
   
   // Type-safe PSM stats
   const psmStats = psmStatsResult as unknown as [bigint, bigint, bigint, bigint] | undefined;
+  
+  // Function to get maximum swappable amount based on token balances and PSM limits
+  const getMaxSwapAmount = (): number => {
+    if (fromToken.symbol === 'USDC') {
+      // For USDC to VCOP, limited by user balance and PSM max swap amount
+      return Math.min(fromToken.balance, psmMaxSwapAmount);
+    } else {
+      // For VCOP to USDC, limited by user balance and PSM reserves
+      const psmUsdcReserves = psmStats ? Number(formatUnits(psmStats[1], 6)) : 0;
+      return Math.min(fromToken.balance, psmUsdcReserves);
+    }
+  };
   
   // Read token allowance when the account or fromToken changes
   const { data: allowanceData } = useContractRead({
@@ -216,6 +298,10 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
       setFromAmount('');
       setToAmount('');
       
+      // Refresh balances after transaction
+      refetchUsdcBalance();
+      refetchVcopBalance();
+      
       // Add to recent transactions
       if (status.statusData?.hash) {
         const newTx = {
@@ -246,7 +332,7 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
           value={fromAmount}
           onChange={setFromAmount}
           label="From"
-          maxValue={fromToken.balance}
+          maxValue={getMaxSwapAmount()}
         />
         
         {/* Swap Direction Button */}
@@ -284,7 +370,7 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
           <div className="flex justify-between text-sm">
             <span className="text-gray-500 dark:text-gray-400">Max Swap Amount</span>
             <span className="text-gray-700 dark:text-gray-300">
-              {formatCurrency(psmMaxSwapAmount, 'USD', 0)}
+              {formatCurrency(getMaxSwapAmount(), fromToken.symbol === 'USDC' ? 'USD' : 'COP', 2)}
             </span>
           </div>
           

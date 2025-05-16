@@ -1,135 +1,239 @@
-import React from 'react';
-import { AlertTriangle, CheckCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useAccount, useContractRead } from 'wagmi';
+import { useNavigate } from 'react-router-dom';
 
-// Mock data for demonstration
-const MOCK_POSITIONS = [
-  { 
-    id: '1', 
-    collateralType: 'USDC', 
-    collateralAmount: 1000, 
-    mintedVcop: 2800000, 
-    healthRatio: 1.5, 
-    liquidationRatio: 1.1 
+// ABI for getting positions
+const COLLATERAL_MANAGER_ABI = [
+  {
+    name: 'positionCount',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'user', type: 'address' }
+    ],
+    outputs: [{ name: '', type: 'uint256' }]
   },
-  { 
-    id: '2', 
-    collateralType: 'ETH', 
-    collateralAmount: 0.5, 
-    mintedVcop: 3500000, 
-    healthRatio: 1.25, 
-    liquidationRatio: 1.2 
+  {
+    name: 'positions',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'user', type: 'address' },
+      { name: 'positionId', type: 'uint256' }
+    ],
+    outputs: [
+      { name: 'collateralToken', type: 'address' },
+      { name: 'collateralAmount', type: 'uint256' },
+      { name: 'vcopMinted', type: 'uint256' }
+    ]
   },
-  { 
-    id: '3', 
-    collateralType: 'USDC', 
-    collateralAmount: 500, 
-    mintedVcop: 1500000, 
-    healthRatio: 1.08, 
-    liquidationRatio: 1.05 
+  {
+    name: 'getCurrentCollateralRatio',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'user', type: 'address' },
+      { name: 'positionId', type: 'uint256' }
+    ],
+    outputs: [{ name: '', type: 'uint256' }]
   }
 ];
 
-const CollateralPositions: React.FC = () => {
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">Mis Posiciones Colaterales</h2>
+// Type for a position
+interface Position {
+  id: number;
+  collateralToken: string;
+  collateralAmount: bigint;
+  vcopMinted: bigint;
+  ratio: number;
+  formattedCollateral: string;
+  formattedDebt: string;
+  formattedRatio: string;
+  isAtRisk: boolean;
+}
+
+// Props for position selection
+interface CollateralPositionsProps {
+  onSelectPosition?: (id: number) => void;
+}
+
+export default function CollateralPositions({ onSelectPosition }: CollateralPositionsProps) {
+  const { address } = useAccount();
+  const navigate = useNavigate();
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Contract addresses from environment variables
+  const collateralManagerAddress = import.meta.env.VITE_VCOP_COLLATERAL_MANAGER_ADDRESS;
+  
+  // Get user position count
+  const { data: positionCount, refetch: refetchCount } = useContractRead({
+    address: collateralManagerAddress as `0x${string}`,
+    abi: COLLATERAL_MANAGER_ABI,
+    functionName: 'positionCount',
+    args: [address as `0x${string}`],
+  });
+  
+  // Load position data
+  useEffect(() => {
+    const loadPositions = async () => {
+      if (!address || !positionCount || !collateralManagerAddress) {
+        setPositions([]);
+        setLoading(false);
+        return;
+      }
       
-      {MOCK_POSITIONS.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="w-full table-auto">
-            <thead>
-              <tr className="text-left text-sm font-semibold text-gray-600 dark:text-gray-300 border-b dark:border-gray-700">
-                <th className="pb-2">ID</th>
-                <th className="pb-2">Colateral</th>
-                <th className="pb-2 text-right">Cantidad</th>
-                <th className="pb-2 text-right">VCOP Acuñado</th>
-                <th className="pb-2 text-center">Estado</th>
-                <th className="pb-2 text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {MOCK_POSITIONS.map((position) => {
-                // Determine health status
-                let healthStatus;
-                let healthClass;
-                
-                if (position.healthRatio >= 1.3) {
-                  healthStatus = "Seguro";
-                  healthClass = "text-green-500 dark:text-green-400";
-                } else if (position.healthRatio >= 1.15) {
-                  healthStatus = "Estable";
-                  healthClass = "text-blue-500 dark:text-blue-400";
-                } else if (position.healthRatio >= position.liquidationRatio + 0.05) {
-                  healthStatus = "Precaución";
-                  healthClass = "text-yellow-500 dark:text-yellow-400";
-                } else {
-                  healthStatus = "Riesgo";
-                  healthClass = "text-red-500 dark:text-red-400";
-                }
-                
-                // Calculate percentage of health bar
-                const healthPercentage = Math.max(
-                  0, 
-                  Math.min(
-                    100, 
-                    ((position.healthRatio - position.liquidationRatio) / 0.5) * 100
-                  )
-                );
-                
-                return (
-                  <tr key={position.id} className="border-b dark:border-gray-700">
-                    <td className="py-4">{position.id}</td>
-                    <td className="py-4">{position.collateralType}</td>
-                    <td className="py-4 text-right">{position.collateralAmount.toLocaleString()}</td>
-                    <td className="py-4 text-right">{position.mintedVcop.toLocaleString()} VCOP</td>
-                    <td className="py-4">
-                      <div className="flex flex-col items-center">
-                        <div className="flex items-center mb-1">
-                          {position.healthRatio < position.liquidationRatio + 0.05 ? (
-                            <AlertTriangle size={16} className="text-red-500 dark:text-red-400 mr-1" />
-                          ) : (
-                            <CheckCircle size={16} className="text-green-500 dark:text-green-400 mr-1" />
-                          )}
-                          <span className={healthClass}>{healthStatus}</span>
-                        </div>
-                        
-                        <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
-                          <div 
-                            className={`h-full rounded-full ${
-                              healthPercentage > 66 ? 'bg-green-500 dark:bg-green-400' :
-                              healthPercentage > 33 ? 'bg-yellow-500 dark:bg-yellow-400' :
-                              'bg-red-500 dark:bg-red-400'
-                            }`}
-                            style={{ width: `${healthPercentage}%` }}
-                          />
-                        </div>
-                        
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {position.healthRatio.toFixed(2)}x
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 text-right">
-                      <button className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 mr-2">
-                        Gestionar
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      try {
+        setLoading(true);
+        
+        // Create array of position ids to fetch
+        const count = Number(positionCount);
+        const positionIds = Array.from({ length: count }, (_, i) => i);
+        
+        // Create fetcher for position data
+        const fetchPosition = async (id: number): Promise<Position | null> => {
+          try {
+            // Get position data
+            const positionResult = await fetch(`/api/position?address=${address}&id=${id}`);
+            
+            if (!positionResult.ok) {
+              console.error(`Failed to fetch position ${id}:`, await positionResult.text());
+              return null;
+            }
+            
+            const positionData = await positionResult.json();
+            const collateralAmount = BigInt(positionData.collateralAmount);
+            const vcopMinted = BigInt(positionData.vcopMinted);
+            const ratio = positionData.ratio;
+            
+            // Format values for display
+            const formattedCollateral = (Number(collateralAmount) / 10**6).toFixed(2);
+            const formattedDebt = (Number(vcopMinted) / 10**6).toFixed(2);
+            const formattedRatio = ratio.toFixed(2);
+            
+            return {
+              id,
+              collateralToken: positionData.collateralToken,
+              collateralAmount,
+              vcopMinted,
+              ratio,
+              formattedCollateral,
+              formattedDebt,
+              formattedRatio,
+              isAtRisk: ratio < 150
+            };
+          } catch (error) {
+            console.error(`Error fetching position ${id}:`, error);
+            return null;
+          }
+        };
+        
+        // Fetch all positions in parallel
+        const positionPromises = positionIds.map(fetchPosition);
+        const positionResults = await Promise.all(positionPromises);
+        
+        // Filter out null results and sort by ID
+        const validPositions = positionResults.filter((p): p is Position => p !== null)
+          .sort((a, b) => a.id - b.id);
+        
+        setPositions(validPositions);
+      } catch (error) {
+        console.error('Error loading positions:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadPositions();
+  }, [address, positionCount, collateralManagerAddress]);
+  
+  // Refresh position data periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (address) {
+        refetchCount();
+      }
+    }, 30000); // Refresh every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [address, refetchCount]);
+  
+  // Handle position selection
+  const handlePositionClick = (id: number) => {
+    if (onSelectPosition) {
+      onSelectPosition(id);
+    } else {
+      navigate(`/loans/position/${id}`);
+    }
+  };
+  
+  // Create a new position
+  const handleCreatePosition = () => {
+    navigate('/loans/create');
+  };
+
+  return (
+    <div className="p-6 bg-white rounded-xl shadow-md">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">My Collateral Positions</h2>
+        <button 
+          onClick={handleCreatePosition}
+          className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700"
+        >
+          New Position
+        </button>
+      </div>
+      
+      {loading ? (
+        <div className="text-center py-8">
+          <p className="text-gray-500">Loading positions...</p>
+        </div>
+      ) : positions.length > 0 ? (
+        <div className="space-y-4">
+          {positions.map((position) => (
+            <div 
+              key={position.id}
+              onClick={() => handlePositionClick(position.id)}
+              className="p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition"
+            >
+              <div className="flex justify-between items-center">
+                <h3 className="font-medium">Position #{position.id}</h3>
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                  position.isAtRisk ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                }`}>
+                  {position.isAtRisk ? 'At Risk' : 'Healthy'}
+                </span>
+              </div>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                <div>
+                  <p className="text-xs text-gray-500">Collateral</p>
+                  <p>{position.formattedCollateral} USDC</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Debt</p>
+                  <p>{position.formattedDebt} VCOP</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Ratio</p>
+                  <p className={position.isAtRisk ? 'text-red-600' : 'text-green-600'}>
+                    {position.formattedRatio}%
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
-        <div className="text-center py-10">
-          <p className="text-gray-500 dark:text-gray-400">No tienes posiciones activas</p>
-          <button className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md transition">
-            Crear posición
+        <div className="text-center py-8 border rounded-lg">
+          <p className="text-gray-500 mb-4">You don't have any collateral positions yet.</p>
+          <button 
+            onClick={handleCreatePosition}
+            className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700"
+          >
+            Create Your First Position
           </button>
         </div>
       )}
     </div>
   );
-};
-
-export default CollateralPositions; 
+} 
