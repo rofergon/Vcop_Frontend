@@ -1,4 +1,4 @@
-import { parseUnits, formatUnits } from 'viem';
+import { parseUnits } from 'viem';
 
 // Get contract addresses from environment variables
 const VCOP_ADDRESS = import.meta.env.VITE_VCOP_ADDRESS as `0x${string}`;

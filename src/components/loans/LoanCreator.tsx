@@ -10,7 +10,8 @@ import {
   TransactionToast,
   TransactionToastIcon,
   TransactionToastLabel,
-  TransactionToastAction
+  TransactionToastAction,
+  type LifecycleStatus
 } from '@coinbase/onchainkit/transaction';
 import { formatUnits, parseUnits, encodeFunctionData } from 'viem';
 import { 
@@ -23,6 +24,17 @@ import { Wallet, ConnectWallet } from '@coinbase/onchainkit/wallet';
 // Constantes para manejo de decimales
 const DECIMALS = 6;
 const DECIMAL_FACTOR = 10 ** DECIMALS;
+
+// Enumeración para estados de transacción según OnchainKit
+type TransactionStateType = 'transactionIdle' | 'transactionPending' | 'success' | 'error' | 'completed';
+
+const TransactionState: Record<string, TransactionStateType> = {
+  IDLE: 'transactionIdle',
+  PENDING: 'transactionPending',
+  SUCCESS: 'success',
+  ERROR: 'error',
+  COMPLETED: 'completed'
+} as const;
 
 // USDC ABI (solo las funciones necesarias)
 const USDC_ABI = [
@@ -93,6 +105,8 @@ export default function LoanCreator() {
   const [utilizationRate, setUtilizationRate] = useState(SAFE_UTILIZATION_RATE);
   const [transactionStatus, setTransactionStatus] = useState<string>("");
   const [needsApproval, setNeedsApproval] = useState(false);
+  const [transactionState, setTransactionState] = useState<TransactionStateType>(TransactionState.IDLE);
+  const [transactionHash, setTransactionHash] = useState<string>("");
   
   // Contract addresses from environment variables
   const collateralManagerAddress = import.meta.env.VITE_VCOP_COLLATERAL_MANAGER_ADDRESS as `0x${string}`;
@@ -225,179 +239,311 @@ export default function LoanCreator() {
   ]);
 
   // Handle transaction status changes
-  const handleStatusChange = useCallback((status: any) => {
+  const handleStatusChange = useCallback((status: LifecycleStatus) => {
+    // Si ya completamos la transacción, no procesar más actualizaciones
+    if (transactionState === TransactionState.COMPLETED) {
+      return;
+    }
+
     console.log('\n=== TRANSACTION STATUS UPDATE ===');
     console.log('Status:', status);
-    console.log('Status Name:', status.statusName);
     
-    setTransactionStatus(status.statusName || "unknown");
-    
-    // Si la transacción fue exitosa y era una aprobación, actualizar el estado
-    if (status.statusName === 'success' && needsApproval) {
-      console.log('Approval successful, updating state to proceed with position creation');
-      setNeedsApproval(false);
+    switch (status.statusName) {
+      case 'transactionPending':
+        setTransactionState(TransactionState.PENDING);
+        break;
+      case 'success':
+        // Solo actualizar si no estamos ya en estado SUCCESS o COMPLETED
+        if (transactionState !== TransactionState.SUCCESS && transactionState !== TransactionState.COMPLETED) {
+          setTransactionState(TransactionState.SUCCESS);
+          // En caso de éxito, el hash estará en el último recibo de transacción
+          if (status.statusData?.transactionReceipts?.length > 0) {
+            const lastReceipt = status.statusData.transactionReceipts[status.statusData.transactionReceipts.length - 1];
+            setTransactionHash(lastReceipt.transactionHash);
+          }
+          if (needsApproval) {
+            setNeedsApproval(false);
+          }
+        }
+        break;
+      case 'error':
+        setTransactionState(TransactionState.ERROR);
+        break;
+      default:
+        if (transactionState !== TransactionState.SUCCESS && transactionState !== TransactionState.COMPLETED) {
+          setTransactionState(TransactionState.IDLE);
+        }
     }
-  }, [needsApproval]);
+  }, [needsApproval, transactionState]);
 
-  return (
-    <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg max-w-lg mx-auto border border-gray-200 dark:border-gray-700">
-      <div className="flex flex-col gap-6">
-        <div>
-          <h2 className="text-2xl font-bold mb-2 text-gray-800 dark:text-white">Crear préstamo</h2>
-          <p className="text-gray-600 dark:text-gray-300">Deposita tu colateral en USDC y recibe tokens VCOP a cambio</p>
-        </div>
-        
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Cantidad de colateral (USDC)</label>
-            <div className="relative">
-              <input
-                type="text"
-                value={displayCollateralAmount}
-                onChange={handleCollateralChange}
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                min="0.000001"
-                step="0.000001"
-                placeholder="0.00"
-              />
-              <span className="absolute right-3 top-3 text-gray-500 dark:text-gray-400">USDC</span>
-            </div>
-          </div>
-          
-          <div>
-            <div className="flex justify-between mb-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                Tasa de utilización: <span className="font-bold">{utilizationRate}%</span>
-              </label>
-              <span className="text-sm text-blue-600 dark:text-blue-400">Máx: {SAFE_UTILIZATION_RATE}%</span>
-            </div>
-            <input
-              type="range"
-              min="50"
-              max={SAFE_UTILIZATION_RATE}
-              value={utilizationRate}
-              onChange={handleSliderChange}
-              className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer"
-            />
-            <div className="w-full flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-              <span>50%</span>
-              <span>Seguro</span>
-              <span>{SAFE_UTILIZATION_RATE}%</span>
-            </div>
-          </div>
-          
-          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-            <div className="flex justify-between mb-1">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-200">VCOP a recibir</label>
-              <div className={`text-sm font-medium px-2 py-1 rounded-full ${
-                isPositionSafe ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-              }`}>
-                {isPositionSafe ? 'Posición segura' : 'Posición riesgosa'}
-              </div>
-            </div>
-            <div className="flex items-center text-2xl font-bold text-gray-900 dark:text-white py-2">
-              {formatNumberWithCommas(displayVcopAmount)} <span className="ml-1 text-sm font-normal text-gray-500 dark:text-gray-400">VCOP</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <div className="flex items-center gap-1">
-                <span className="text-gray-600 dark:text-gray-300">Ratio de colateralización:</span>
-                <span className={`font-medium ${
-                  collateralizationRatio >= 200 ? "text-green-600 dark:text-green-400" : 
-                  collateralizationRatio >= 150 ? "text-yellow-600 dark:text-yellow-400" : 
-                  "text-red-600 dark:text-red-400"
-                }`}>
-                  {collateralizationRatio}%
-                </span>
-              </div>
-              <span className="text-gray-500 dark:text-gray-400">Mínimo: 150%</span>
+  // Función para cerrar el modal
+  const handleCloseModal = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    // Solo cerrar si se hace clic en el fondo oscuro (no en el contenido del modal)
+    if ((e.target as HTMLDivElement).id === 'modal-backdrop') {
+      setTransactionState(TransactionState.COMPLETED);
+      setDisplayCollateralAmount('100');
+      setDisplayVcopAmount('0');
+      setUtilizationRate(SAFE_UTILIZATION_RATE);
+    }
+  }, []);
+
+  // Función para reiniciar el formulario
+  const handleReset = useCallback(() => {
+    setTransactionState(TransactionState.COMPLETED);
+    setDisplayCollateralAmount('100');
+    setDisplayVcopAmount('0');
+    setUtilizationRate(SAFE_UTILIZATION_RATE);
+  }, []);
+
+  // Componente de mensaje de éxito
+  const SuccessMessage = () => {
+    if (transactionState !== TransactionState.SUCCESS || needsApproval) return null;
+
+    return (
+      <div 
+        id="modal-backdrop"
+        className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 cursor-pointer"
+        onClick={handleCloseModal}
+      >
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl transform animate-fadeIn cursor-default" onClick={e => e.stopPropagation()}>
+          <div className="text-center">
+            {/* Botón de cerrar en la esquina superior derecha */}
+            <button
+              onClick={handleReset}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Resto del contenido del modal */}
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-green-900 mb-4">
+              <svg className="h-10 w-10 text-green-500 dark:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+              </svg>
             </div>
             
-            {/* Barra de progreso del ratio de colateralización */}
-            <div className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-full mt-2">
-              <div 
-                className={`h-2 rounded-full ${
-                  collateralizationRatio >= 200 ? "bg-green-500" : 
-                  collateralizationRatio >= 150 ? "bg-yellow-500" : 
-                  "bg-red-500"
-                }`}
-                style={{ width: `${Math.min(100, (collateralizationRatio / 250) * 100)}%` }}
-              ></div>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              ¡Posición creada con éxito!
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Tu posición de préstamo ha sido creada exitosamente
+            </p>
+            
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 dark:text-gray-300">Colateral depositado:</span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {formatNumberWithCommas(displayCollateralAmount)} USDC
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 dark:text-gray-300">VCOP recibido:</span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {formatNumberWithCommas(displayVcopAmount)} VCOP
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 dark:text-gray-300">Ratio de colateralización:</span>
+                  <span className={`font-medium ${
+                    collateralizationRatio >= 200 ? "text-green-600 dark:text-green-400" : 
+                    "text-yellow-600 dark:text-yellow-400"
+                  }`}>
+                    {collateralizationRatio}%
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              {transactionHash && (
+                <a
+                  href={`https://sepolia.basescan.org/tx/${transactionHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 dark:text-blue-400 hover:underline text-sm block"
+                >
+                  Ver transacción en BaseScan →
+                </a>
+              )}
+              
+              <button
+                onClick={handleReset}
+                className="w-full py-2 px-4 bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors"
+              >
+                Crear nueva posición
+              </button>
             </div>
           </div>
-          
-          {!isPositionSafe && (
-            <div className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
-              <div className="flex items-start">
-                <svg className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-1 9a1 1 0 100-2 1 1 0 000 2zm0 0v-5a1 1 0 10-2 0v5a1 1 0 002 0z" clipRule="evenodd" />
-                </svg>
-                <p>La colateralización debe ser de al menos 150% para crear una posición.
-                Reduzca la tasa de utilización o aumente el colateral.</p>
-              </div>
-            </div>
-          )}
-
-          {isConnected ? (
-            <Transaction 
-              chainId={BASE_SEPOLIA_CHAIN_ID}
-              calls={getCalls}
-              onStatus={handleStatusChange}
-              onError={(error) => {
-                console.error('Transaction Error:', error);
-              }}
-            >
-              <TransactionButton 
-                className={`w-full py-3 px-4 font-medium text-base rounded-lg transition-colors ${
-                  isPositionSafe 
-                    ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm" 
-                    : "bg-gray-400 text-white cursor-not-allowed"
-                }`}
-                disabled={!isPositionSafe}
-                text={needsApproval ? "Aprobar USDC" : "Crear posición de préstamo"}
-              />
-              
-              <div className="mt-4">
-                <TransactionSponsor />
-              </div>
-              
-              <div className="mt-4">
-                <TransactionStatus>
-                  <div className="flex items-center gap-2 text-sm">
-                    <TransactionStatusLabel />
-                    <div className="ml-auto">
-                      <TransactionStatusAction />
-                    </div>
-                  </div>
-                </TransactionStatus>
-              </div>
-              
-              <TransactionToast>
-                <div className="flex items-center gap-3">
-                  <TransactionToastIcon />
-                  <TransactionToastLabel />
-                  <div className="ml-auto">
-                    <TransactionToastAction />
-                  </div>
-                </div>
-              </TransactionToast>
-            </Transaction>
-          ) : (
-            <div className="text-center mt-2">
-              <Wallet>
-                <ConnectWallet>
-                  <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 font-medium text-base shadow-sm transition-colors">
-                    Conectar cartera
-                  </button>
-                </ConnectWallet>
-              </Wallet>
-            </div>
-          )}
-        </div>
-        
-        <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-          <p>Este préstamo utiliza USDC como colateral para obtener tokens VCOP. Asegúrese de mantener un ratio de colateralización saludable para evitar liquidaciones.</p>
         </div>
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <>
+      <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg max-w-lg mx-auto border border-gray-200 dark:border-gray-700">
+        <div className="flex flex-col gap-6">
+          <div>
+            <h2 className="text-2xl font-bold mb-2 text-gray-800 dark:text-white">Crear préstamo</h2>
+            <p className="text-gray-600 dark:text-gray-300">Deposita tu colateral en USDC y recibe tokens VCOP a cambio</p>
+          </div>
+          
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Cantidad de colateral (USDC)</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={displayCollateralAmount}
+                  onChange={handleCollateralChange}
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  min="0.000001"
+                  step="0.000001"
+                  placeholder="0.00"
+                />
+                <span className="absolute right-3 top-3 text-gray-500 dark:text-gray-400">USDC</span>
+              </div>
+            </div>
+            
+            <div>
+              <div className="flex justify-between mb-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Tasa de utilización: <span className="font-bold">{utilizationRate}%</span>
+                </label>
+                <span className="text-sm text-blue-600 dark:text-blue-400">Máx: {SAFE_UTILIZATION_RATE}%</span>
+              </div>
+              <input
+                type="range"
+                min="50"
+                max={SAFE_UTILIZATION_RATE}
+                value={utilizationRate}
+                onChange={handleSliderChange}
+                className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer"
+              />
+              <div className="w-full flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <span>50%</span>
+                <span>Seguro</span>
+                <span>{SAFE_UTILIZATION_RATE}%</span>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+              <div className="flex justify-between mb-1">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">VCOP a recibir</label>
+                <div className={`text-sm font-medium px-2 py-1 rounded-full ${
+                  isPositionSafe ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                }`}>
+                  {isPositionSafe ? 'Posición segura' : 'Posición riesgosa'}
+                </div>
+              </div>
+              <div className="flex items-center text-2xl font-bold text-gray-900 dark:text-white py-2">
+                {formatNumberWithCommas(displayVcopAmount)} <span className="ml-1 text-sm font-normal text-gray-500 dark:text-gray-400">VCOP</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <div className="flex items-center gap-1">
+                  <span className="text-gray-600 dark:text-gray-300">Ratio de colateralización:</span>
+                  <span className={`font-medium ${
+                    collateralizationRatio >= 200 ? "text-green-600 dark:text-green-400" : 
+                    collateralizationRatio >= 150 ? "text-yellow-600 dark:text-yellow-400" : 
+                    "text-red-600 dark:text-red-400"
+                  }`}>
+                    {collateralizationRatio}%
+                  </span>
+                </div>
+                <span className="text-gray-500 dark:text-gray-400">Mínimo: 150%</span>
+              </div>
+              
+              {/* Barra de progreso del ratio de colateralización */}
+              <div className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-full mt-2">
+                <div 
+                  className={`h-2 rounded-full ${
+                    collateralizationRatio >= 200 ? "bg-green-500" : 
+                    collateralizationRatio >= 150 ? "bg-yellow-500" : 
+                    "bg-red-500"
+                  }`}
+                  style={{ width: `${Math.min(100, (collateralizationRatio / 250) * 100)}%` }}
+                ></div>
+              </div>
+            </div>
+            
+            {!isPositionSafe && (
+              <div className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-1 9a1 1 0 100-2 1 1 0 000 2zm0 0v-5a1 1 0 10-2 0v5a1 1 0 002 0z" clipRule="evenodd" />
+                  </svg>
+                  <p>La colateralización debe ser de al menos 150% para crear una posición.
+                  Reduzca la tasa de utilización o aumente el colateral.</p>
+                </div>
+              </div>
+            )}
+
+            {isConnected ? (
+              <Transaction 
+                chainId={BASE_SEPOLIA_CHAIN_ID}
+                calls={getCalls}
+                onStatus={handleStatusChange}
+                onError={(error) => {
+                  console.error('Transaction Error:', error);
+                }}
+              >
+                <TransactionButton 
+                  className={`w-full py-3 px-4 font-medium text-base rounded-lg transition-colors ${
+                    isPositionSafe 
+                      ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm" 
+                      : "bg-gray-400 text-white cursor-not-allowed"
+                  }`}
+                  disabled={!isPositionSafe}
+                  text={needsApproval ? "Aprobar USDC" : "Crear posición de préstamo"}
+                />
+                
+                <div className="mt-4">
+                  <TransactionSponsor />
+                </div>
+                
+                <div className="mt-4">
+                  <TransactionStatus>
+                    <div className="flex items-center gap-2 text-sm">
+                      <TransactionStatusLabel />
+                      <div className="ml-auto">
+                        <TransactionStatusAction />
+                      </div>
+                    </div>
+                  </TransactionStatus>
+                </div>
+                
+                <TransactionToast>
+                  <div className="flex items-center gap-3">
+                    <TransactionToastIcon />
+                    <TransactionToastLabel />
+                    <div className="ml-auto">
+                      <TransactionToastAction />
+                    </div>
+                  </div>
+                </TransactionToast>
+              </Transaction>
+            ) : (
+              <div className="text-center mt-2">
+                <Wallet>
+                  <ConnectWallet>
+                    <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 font-medium text-base shadow-sm transition-colors">
+                      Conectar cartera
+                    </button>
+                  </ConnectWallet>
+                </Wallet>
+              </div>
+            )}
+          </div>
+          
+          <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+            <p>Este préstamo utiliza USDC como colateral para obtener tokens VCOP. Asegúrese de mantener un ratio de colateralización saludable para evitar liquidaciones.</p>
+          </div>
+        </div>
+      </div>
+      <SuccessMessage />
+    </>
   );
 } 
