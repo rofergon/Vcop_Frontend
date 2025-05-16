@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import Dashboard from './pages/Dashboard';
-import Loans from './pages/Loans';
+import LoansPage from './pages/LoansPage';
 import { Sun, Moon } from 'lucide-react';
 import { useDarkMode } from './context/DarkModeContext';
 
@@ -28,7 +28,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/dashboard" element={<Navigate to="/" replace />} />
-            <Route path="/loans" element={<Loans />} />
+            <Route path="/loans" element={<LoansPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

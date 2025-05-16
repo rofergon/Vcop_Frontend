@@ -167,55 +167,76 @@ export const createLoanCalls = (collateralAmount: string, vcopToMint: string) =>
 
 // Function to add more collateral to an existing position
 export const addCollateralCalls = (positionId: number, collateralAmount: string) => {
-  const parsedCollateral = parseUnits(collateralAmount, 6);
+  try {
+    // Validate and parse the collateral amount
+    const parsedCollateral = parseUnits(collateralAmount, 6);
+    console.log(`Adding collateral: positionId=${positionId}, amount=${collateralAmount} USDC (${parsedCollateral} raw)`);
 
-  return [
-    // 1. Approve additional USDC transfer
-    {
-      to: toHexString(USDC_ADDRESS),
-      data: toHexString(`0x095ea7b3${padTo64(VCOP_COLLATERAL_MANAGER_ADDRESS.slice(2))}${padTo64(parsedCollateral.toString(16))}`),
-      value: 0n
-    },
-    // 2. Add collateral to existing position
-    {
-      to: toHexString(VCOP_COLLATERAL_MANAGER_ADDRESS),
-      data: toHexString(`0xf68016b7${padTo64(BigInt(positionId).toString(16))}${padTo64(parsedCollateral.toString(16))}`),
-      value: 0n
-    }
-  ];
+    return [
+      // 1. Approve USDC transfer
+      {
+        to: toHexString(USDC_ADDRESS),
+        data: toHexString(`0x095ea7b3${padTo64(VCOP_COLLATERAL_MANAGER_ADDRESS.slice(2))}${padTo64(parsedCollateral.toString(16))}`),
+        value: 0n
+      },
+      // 2. Add collateral to existing position
+      {
+        to: toHexString(VCOP_COLLATERAL_MANAGER_ADDRESS),
+        data: toHexString(`0xf68016b7${padTo64(BigInt(positionId).toString(16))}${padTo64(parsedCollateral.toString(16))}`),
+        value: 0n
+      }
+    ];
+  } catch (error) {
+    console.error('Error preparing addCollateral transaction:', error);
+    throw new Error(`Failed to prepare addCollateral transaction: ${error}`);
+  }
 };
 
 // Function to withdraw collateral from a position
 export const withdrawCollateralCalls = (positionId: number, withdrawAmount: string) => {
-  const parsedAmount = parseUnits(withdrawAmount, 6);
+  try {
+    // Validate and parse the withdraw amount
+    const parsedAmount = parseUnits(withdrawAmount, 6);
+    console.log(`Withdrawing collateral: positionId=${positionId}, amount=${withdrawAmount} USDC (${parsedAmount} raw)`);
 
-  return [
-    {
-      to: toHexString(VCOP_COLLATERAL_MANAGER_ADDRESS),
-      data: toHexString(`0x047a52d2${padTo64(BigInt(positionId).toString(16))}${padTo64(parsedAmount.toString(16))}`),
-      value: 0n
-    }
-  ];
+    return [
+      {
+        to: toHexString(VCOP_COLLATERAL_MANAGER_ADDRESS),
+        data: toHexString(`0x047a52d2${padTo64(BigInt(positionId).toString(16))}${padTo64(parsedAmount.toString(16))}`),
+        value: 0n
+      }
+    ];
+  } catch (error) {
+    console.error('Error preparing withdrawCollateral transaction:', error);
+    throw new Error(`Failed to prepare withdrawCollateral transaction: ${error}`);
+  }
 };
 
 // Function to repay loan debt
 export const repayLoanCalls = (positionId: number, repayAmount: string) => {
-  const parsedAmount = parseUnits(repayAmount, 6);
+  try {
+    // Validate and parse the repay amount
+    const parsedAmount = parseUnits(repayAmount, 6);
+    console.log(`Repaying loan: positionId=${positionId}, amount=${repayAmount} VCOP (${parsedAmount} raw)`);
 
-  return [
-    // 1. Approve VCOP for CollateralManager
-    {
-      to: toHexString(VCOP_ADDRESS),
-      data: toHexString(`0x095ea7b3${padTo64(VCOP_COLLATERAL_MANAGER_ADDRESS.slice(2))}${padTo64(parsedAmount.toString(16))}`),
-      value: 0n
-    },
-    // 2. Repay debt
-    {
-      to: toHexString(VCOP_COLLATERAL_MANAGER_ADDRESS),
-      data: toHexString(`0xba636ccb${padTo64(BigInt(positionId).toString(16))}${padTo64(parsedAmount.toString(16))}`),
-      value: 0n
-    }
-  ];
+    return [
+      // 1. Approve VCOP for CollateralManager
+      {
+        to: toHexString(VCOP_ADDRESS),
+        data: toHexString(`0x095ea7b3${padTo64(VCOP_COLLATERAL_MANAGER_ADDRESS.slice(2))}${padTo64(parsedAmount.toString(16))}`),
+        value: 0n
+      },
+      // 2. Repay debt
+      {
+        to: toHexString(VCOP_COLLATERAL_MANAGER_ADDRESS),
+        data: toHexString(`0xba636ccb${padTo64(BigInt(positionId).toString(16))}${padTo64(parsedAmount.toString(16))}`),
+        value: 0n
+      }
+    ];
+  } catch (error) {
+    console.error('Error preparing repayLoan transaction:', error);
+    throw new Error(`Failed to prepare repayLoan transaction: ${error}`);
+  }
 };
 
 // Function to swap VCOP for USDC through PSM

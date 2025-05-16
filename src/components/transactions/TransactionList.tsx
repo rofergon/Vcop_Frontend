@@ -21,6 +21,7 @@ import VCOPCollateralHookABI from '../../Abis/VCOPCollateralHook.json';
 interface TransactionListProps {
   title?: string;
   maxItems?: number;
+  transactions: Transaction[];
 }
 
 // Create a storage key for localStorage
@@ -122,10 +123,11 @@ const saveTransactionsToStorage = (transactions: Transaction[]) => {
 
 const TransactionList: React.FC<TransactionListProps> = ({
   title = 'Recent Transactions',
-  maxItems = 6 // Increased default to 6
+  maxItems = 6, // Increased default to 6
+  transactions: initialTransactions
 }) => {
   // Initialize with stored transactions or empty array
-  const [transactions, setTransactions] = useState<Transaction[]>(loadStoredTransactions());
+  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   
   // Get connected account and network

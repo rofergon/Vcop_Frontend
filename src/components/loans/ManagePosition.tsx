@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useAccount, useContractRead } from 'wagmi';
 import { baseSepolia } from 'viem/chains';
+import { formatUnits, parseUnits } from 'viem';
 import { 
   Transaction, 
   TransactionButton,
@@ -127,8 +128,8 @@ export default function ManagePosition({ positionId = 0 }: ManagePositionProps) 
   }, [refetchPosition, refetchRatio]);
 
   // Format values for display
-  const formattedCollateral = Number(collateralAmount) / 10**6;
-  const formattedDebt = Number(vcopMinted) / 10**6;
+  const formattedCollateral = Number(formatUnits(collateralAmount, 6));
+  const formattedDebt = Number(formatUnits(vcopMinted, 6));
   const formattedRatio = collateralRatio ? Number(collateralRatio) / 10000 : 0;
   
   // Determine if position is at risk
@@ -148,7 +149,7 @@ export default function ManagePosition({ positionId = 0 }: ManagePositionProps) 
   };
 
   // Determine max amount based on operation
-  const getMaxAmount = () => {
+  const getMaxAmount = (): number => {
     if (operation === 'repay') {
       return formattedDebt;
     } else if (operation === 'withdraw') {
@@ -162,7 +163,22 @@ export default function ManagePosition({ positionId = 0 }: ManagePositionProps) 
 
   // Set max amount
   const handleSetMax = () => {
-    setAmount(getMaxAmount().toFixed(6));
+    const maxAmount = getMaxAmount();
+    setAmount(maxAmount.toFixed(6));
+  };
+
+  // Handle amount input change with proper validation
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Only allow numbers and decimals
+    if (/^\d*\.?\d*$/.test(value)) {
+      setAmount(value);
+    }
+  };
+
+  // Format display values with proper number handling
+  const formatDisplayValue = (value: number): string => {
+    return value.toFixed(6);
   };
 
   // Return placeholder UI if no position ID provided
@@ -181,8 +197,8 @@ export default function ManagePosition({ positionId = 0 }: ManagePositionProps) 
       
       {/* Position information */}
       <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-        <p>Collateral: {formattedCollateral.toFixed(6)} USDC</p>
-        <p>Debt: {formattedDebt.toFixed(6)} VCOP</p>
+        <p>Collateral: {formatDisplayValue(formattedCollateral)} USDC</p>
+        <p>Debt: {formatDisplayValue(formattedDebt)} VCOP</p>
         <p className={`font-medium ${isPositionAtRisk ? 'text-red-600' : 'text-green-600'}`}>
           Collateralization Ratio: {formattedRatio.toFixed(2)}%
           {isPositionAtRisk && ' (At Risk)'}
@@ -218,12 +234,12 @@ export default function ManagePosition({ positionId = 0 }: ManagePositionProps) 
           )}
         </div>
         <input
-          type="number"
+          type="text"
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
+          onChange={handleAmountChange}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          min="0"
-          step="0.000001"
+          placeholder="0.000000"
+          pattern="^\d*\.?\d*$"
         />
       </div>
       
