@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import CustomConnectButton from '../wallet/ConnectButton';
 import { baseSepolia, base } from 'viem/chains';
 import { useAccount, useSwitchChain } from 'wagmi';
@@ -8,7 +8,6 @@ import { useAccount, useSwitchChain } from 'wagmi';
 interface HeaderProps {}
 
 const Header: React.FC<HeaderProps> = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNetworkMenuOpen, setIsNetworkMenuOpen] = useState(false);
   const location = useLocation();
   const { chainId, isConnected } = useAccount();
@@ -16,36 +15,32 @@ const Header: React.FC<HeaderProps> = () => {
   
   const navItems = [
     { name: 'Dashboard', path: '/', current: location.pathname === '/' },
-    { name: 'Préstamos', path: '/loans', current: location.pathname === '/loans' },
+    { name: 'Loans', path: '/loans', current: location.pathname === '/loans' },
     { name: 'Swap', path: '/swap', current: location.pathname === '/swap' },
     { name: 'Stats', path: '/stats', current: location.pathname === '/stats' }
   ];
 
-  // Determinar la red actual basándose en el chainId
+  // Determine current network based on chainId
   const isTestnet = chainId === baseSepolia.id;
   const isMainnet = chainId === base.id;
-  
-  // Si no estamos conectados, mostramos la red configurada en el provider (baseSepolia)
   const networkName = isMainnet ? "Mainnet" : "Sepolia";
   
-  // Personalizar el estilo según la red
   const networkBadge = (
     <div className="relative">
       <button 
         onClick={() => setIsNetworkMenuOpen(!isNetworkMenuOpen)}
-        className={`flex items-center ml-2 text-xs px-2 py-1 rounded-full cursor-pointer ${
+        className={`ml-2 flex items-center text-xs px-3 py-1.5 rounded-full cursor-pointer backdrop-blur-sm border ${
           isMainnet 
-            ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300' 
-            : 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300'
-        } font-medium`}
+            ? 'bg-green-100/70 text-green-800 border-green-200/50 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800/30' 
+            : 'bg-yellow-100/70 text-yellow-800 border-yellow-200/50 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800/30'
+        } font-medium shadow-sm transition-all hover:shadow`}
       >
         {networkName}
         <ChevronDown className="h-3 w-3 ml-1" />
       </button>
       
-      {/* Dropdown de selección de red */}
       {isNetworkMenuOpen && isConnected && (
-        <div className="absolute right-0 mt-1 w-36 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 overflow-hidden">
+        <div className="absolute right-0 mt-1 w-40 bg-white/90 backdrop-blur-sm dark:bg-gray-800/90 rounded-xl shadow-lg z-10 overflow-hidden border border-blue-100/50 dark:border-blue-800/30">
           <div className="py-1">
             <button
               onClick={() => {
@@ -53,8 +48,8 @@ const Header: React.FC<HeaderProps> = () => {
                 setIsNetworkMenuOpen(false);
               }}
               className={`block w-full text-left px-4 py-2 text-sm ${
-                isTestnet ? 'bg-gray-100 dark:bg-gray-700' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-              } text-gray-900 dark:text-gray-200`}
+                isTestnet ? 'bg-blue-50/50 dark:bg-blue-900/20' : 'hover:bg-blue-50/50 dark:hover:bg-blue-900/20'
+              } text-blue-800 dark:text-blue-200 transition-colors`}
             >
               Base Sepolia
             </button>
@@ -64,8 +59,8 @@ const Header: React.FC<HeaderProps> = () => {
                 setIsNetworkMenuOpen(false);
               }}
               className={`block w-full text-left px-4 py-2 text-sm ${
-                isMainnet ? 'bg-gray-100 dark:bg-gray-700' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-              } text-gray-900 dark:text-gray-200`}
+                isMainnet ? 'bg-blue-50/50 dark:bg-blue-900/20' : 'hover:bg-blue-50/50 dark:hover:bg-blue-900/20'
+              } text-blue-800 dark:text-blue-200 transition-colors`}
             >
               Base Mainnet
             </button>
@@ -76,85 +71,48 @@ const Header: React.FC<HeaderProps> = () => {
   );
   
   return (
-    <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-100 dark:border-gray-800">
+    <header className="bg-white/80 backdrop-blur-md border-b border-blue-100/50 dark:bg-gray-900/80 dark:border-blue-800/30 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex-shrink-0 flex items-center">
-            <Link to="/" className="text-2xl font-bold text-blue-600 dark:text-blue-400">VCOP</Link>
-            <span className="ml-2 text-sm px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium">
+        <div className="flex flex-wrap items-center justify-between gap-4 py-3">
+          {/* Logo and Network Badge */}
+          <div className="flex items-center flex-shrink-0">
+            <Link to="/" className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-500 dark:from-blue-400 dark:to-blue-300">
+              VCOP
+            </Link>
+            <span className="ml-2 text-sm px-3 py-1 rounded-xl bg-blue-100/60 backdrop-blur-sm text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium border border-blue-200/50 dark:border-blue-800/30 shadow-sm">
               PSM
             </span>
             {networkBadge}
           </div>
           
-          {/* Desktop Navigation - Always visible on desktop */}
-          <nav className="flex-1 flex justify-center mx-4">
-            <div className="flex space-x-2">
-              {navItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.path}
-                  className={`px-4 py-2 mx-1 rounded-md text-sm font-medium transition-colors ${
-                    item.current
-                      ? 'text-white bg-blue-600 dark:bg-blue-700'
-                      : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
-                  }`}
-                  aria-current={item.current ? 'page' : undefined}
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </div>
+          {/* Navigation - Always visible, wraps on small screens */}
+          <nav className="flex flex-wrap justify-center gap-2">
+            {navItems.map((item) => (
+              <Link
+                key={item.name}
+                to={item.path}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  item.current
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md'
+                    : 'bg-blue-50/50 text-blue-700 hover:bg-blue-100/70 dark:bg-blue-900/30 dark:text-blue-200 dark:hover:bg-blue-800/40'
+                }`}
+              >
+                {item.name}
+              </Link>
+            ))}
           </nav>
           
-          {/* Wallet and Mobile Menu */}
-          <div className="flex items-center">
+          {/* Wallet */}
+          <div className="flex items-center flex-shrink-0">
             <CustomConnectButton />
-            
-            {/* Mobile menu button - only visible on mobile */}
-            <div className="ml-2 md:hidden">
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none"
-              >
-                <span className="sr-only">Open main menu</span>
-                {isMenuOpen ? (
-                  <X className="block h-6 w-6" aria-hidden="true" />
-                ) : (
-                  <Menu className="block h-6 w-6" aria-hidden="true" />
-                )}
-              </button>
-            </div>
           </div>
         </div>
       </div>
-      
-      {/* Mobile menu - only contains navigation items */}
-      <div className={`md:hidden ${isMenuOpen ? 'block' : 'hidden'}`}>
-        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-          {navItems.map((item) => (
-            <Link
-              key={item.name}
-              to={item.path}
-              className={`block px-3 py-2 rounded-md text-base font-medium ${
-                item.current
-                  ? 'text-white bg-blue-600 dark:bg-blue-700'
-                  : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
-              }`}
-              aria-current={item.current ? 'page' : undefined}
-              onClick={() => setIsMenuOpen(false)}
-            >
-              {item.name}
-            </Link>
-          ))}
-        </div>
-      </div>
 
-      {/* Cerrar el menú de redes si se hace clic fuera del menú */}
+      {/* Close network menu when clicking outside */}
       {isNetworkMenuOpen && (
         <div 
-          className="fixed inset-0 z-0"
+          className="fixed inset-0 z-40"
           onClick={() => setIsNetworkMenuOpen(false)}
         />
       )}

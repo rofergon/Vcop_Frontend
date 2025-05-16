@@ -259,9 +259,9 @@ export default function LoanCreator() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Crear préstamo
+              Create loan
             </h2>
-            <p className="text-blue-600/80">Deposita tu colateral en USDC y recibe tokens VCOP a cambio</p>
+            <p className="text-blue-600/80">Deposit your collateral in USDC and receive VCOP tokens in return</p>
           </div>
           
           <div className="space-y-6">
@@ -270,7 +270,7 @@ export default function LoanCreator() {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Cantidad de colateral (USDC)
+                Collateral amount (USDC)
               </label>
               <div className="relative">
                 <input
@@ -292,9 +292,9 @@ export default function LoanCreator() {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
-                  Tasa de utilización: <span className="font-bold ml-1">{utilizationRate}%</span>
+                  Utilization rate: <span className="font-bold ml-1">{utilizationRate}%</span>
                 </label>
-                <span className="text-sm text-blue-600 font-medium">Máx: {SAFE_UTILIZATION_RATE}%</span>
+                <span className="text-sm text-blue-600 font-medium">Max: {SAFE_UTILIZATION_RATE}%</span>
               </div>
               <input
                 type="range"
@@ -306,7 +306,7 @@ export default function LoanCreator() {
               />
               <div className="w-full flex justify-between text-xs text-blue-500 mt-1">
                 <span>50%</span>
-                <span>Seguro</span>
+                <span>Safe</span>
                 <span>{SAFE_UTILIZATION_RATE}%</span>
               </div>
             </div>
@@ -317,7 +317,7 @@ export default function LoanCreator() {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
                   </svg>
-                  VCOP a recibir
+                  VCOP to receive
                 </label>
                 <div className={`text-xs font-medium px-2 py-1 rounded-full flex items-center ${
                   isValidPosition ? "bg-green-100/80 text-green-800" : "bg-red-100/80 text-red-800"
@@ -327,14 +327,14 @@ export default function LoanCreator() {
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                       </svg>
-                      Posición segura
+                      Safe position
                     </>
                   ) : (
                     <>
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
-                      Posición riesgosa
+                      Risky position
                     </>
                   )}
                 </div>
@@ -344,7 +344,7 @@ export default function LoanCreator() {
               </div>
               <div className="flex justify-between text-sm">
                 <div className="flex items-center gap-1">
-                  <span className="text-blue-700">Ratio de colateralización:</span>
+                  <span className="text-blue-700">Collateralization ratio:</span>
                   <span className={`font-medium ${
                     collateralRatio >= 200 ? "text-green-600" : 
                     collateralRatio >= 150 ? "text-yellow-600" : 
@@ -353,7 +353,7 @@ export default function LoanCreator() {
                     {collateralRatio.toFixed(2)}%
                   </span>
                 </div>
-                <span className="text-blue-500">Mínimo: 150%</span>
+                <span className="text-blue-500">Minimum: 150%</span>
               </div>
               
               {/* Barra de progreso del ratio de colateralización */}
@@ -374,8 +374,8 @@ export default function LoanCreator() {
                 <svg className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <p>La colateralización debe ser de al menos 150% para crear una posición.
-                Reduzca la tasa de utilización o aumente el colateral.</p>
+                <p>Collateralization must be at least 150% to create a position.
+                Reduce utilization rate or increase collateral.</p>
               </div>
             )}
 
@@ -394,7 +394,7 @@ export default function LoanCreator() {
                       ? 'bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-800 hover:to-blue-700' 
                       : 'bg-gray-400 cursor-not-allowed'
                   }`}
-                  text={needsApproval ? "Aprobar USDC" : "Crear posición de préstamo"}
+                  text={needsApproval ? "Approve USDC" : "Create loan position"}
                   disabled={!isValidPosition || collateralAmount === ''}
                   data-transaction-button
                 />
@@ -429,7 +429,7 @@ export default function LoanCreator() {
                 <Wallet>
                   <ConnectWallet>
                     <button className="w-full bg-gradient-to-r from-blue-700 to-blue-600 text-white py-3 px-4 rounded-xl hover:from-blue-800 hover:to-blue-700 font-medium shadow-md transition-all">
-                      Conectar cartera
+                      Connect wallet
                     </button>
                   </ConnectWallet>
                 </Wallet>
@@ -442,7 +442,7 @@ export default function LoanCreator() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 flex-shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Este préstamo utiliza USDC como colateral para obtener tokens VCOP. Asegúrese de mantener un ratio de colateralización saludable para evitar liquidaciones.
+              This loan uses USDC as collateral to obtain VCOP tokens. Make sure to maintain a healthy collateralization ratio to avoid liquidations.
             </p>
           </div>
         </div>
@@ -475,10 +475,10 @@ export default function LoanCreator() {
               </div>
               
               <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-800 to-blue-600 mb-2">
-                ¡Posición creada con éxito!
+                Position created successfully!
               </h3>
               <p className="text-blue-600/80 mb-6">
-                Tu posición de préstamo ha sido creada exitosamente
+                Your loan position has been created successfully
               </p>
               
               <div className="bg-blue-50/50 backdrop-blur-sm rounded-xl p-4 mb-6 border border-blue-100/50">
@@ -488,7 +488,7 @@ export default function LoanCreator() {
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Colateral depositado:
+                      Deposited collateral:
                     </span>
                     <span className="font-medium text-blue-900">
                       {formatNumberWithCommas(collateralAmount)} USDC
@@ -499,7 +499,7 @@ export default function LoanCreator() {
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
                       </svg>
-                      VCOP recibido:
+                      VCOP received:
                     </span>
                     <span className="font-medium text-blue-900">
                       {formatNumberWithCommas(vcopToReceive)} VCOP
@@ -510,7 +510,7 @@ export default function LoanCreator() {
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                       </svg>
-                      Ratio de colateralización:
+                      Collateralization ratio:
                     </span>
                     <span className={`font-medium ${
                       collateralRatio >= 200 ? "text-green-600" : 
@@ -534,7 +534,7 @@ export default function LoanCreator() {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
-                    Ver transacción en BaseScan
+                    View transaction on BaseScan
                   </a>
                 )}
                 
@@ -542,7 +542,7 @@ export default function LoanCreator() {
                   onClick={handleReset}
                   className="w-full py-3 px-4 bg-gradient-to-r from-blue-700 to-blue-600 text-white rounded-xl hover:from-blue-800 hover:to-blue-700 transition-all shadow-md"
                 >
-                  Crear nueva posición
+                  Create new position
                 </button>
               </div>
             </div>

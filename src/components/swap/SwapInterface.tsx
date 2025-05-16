@@ -41,8 +41,8 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
   const [fromAmount, setFromAmount] = useState<string>('');
   const [toAmount, setToAmount] = useState<string>('');
   const [needsApproval, setNeedsApproval] = useState<boolean>(true);
-  const [allowance, setAllowance] = useState<bigint>(BigInt(0));
-  const [showSwapDetails, setShowSwapDetails] = useState<boolean>(false);
+  const [, setAllowance] = useState<bigint>(BigInt(0));
+  const [] = useState<boolean>(false);
   const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
   
   // Environment variables
@@ -324,7 +324,7 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
   };
   
   return (
-    <Card title="Swap" className="w-full h-full bg-gradient-to-br from-white to-blue-50 dark:from-gray-900 dark:to-gray-800">
+    <Card title="Swap" className="w-full h-full bg-gradient-to-br from-blue-50/80 to-indigo-50/80 backdrop-blur-sm border border-blue-100/50 shadow-lg hover:shadow-xl transition-all dark:from-blue-900/20 dark:to-indigo-900/20 dark:border-blue-800/30">
       <div className="space-y-6">
         {/* From Token Input */}
         <TokenInput
@@ -339,11 +339,11 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
         <div className="relative flex justify-center">
           <button
             onClick={handleSwitchTokens}
-            className="absolute -mt-3 p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-all duration-200 transform hover:rotate-180"
+            className="absolute -mt-3 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-blue-50/80 border border-blue-100/50 shadow-md transition-all duration-200 transform hover:rotate-180 hover:scale-110"
           >
-            <ArrowDownUp size={18} className="text-gray-600 dark:text-gray-400" />
+            <ArrowDownUp size={18} className="text-blue-600 dark:text-blue-400" />
           </button>
-          <div className="border-t border-gray-200 dark:border-gray-700 w-full my-3"></div>
+          <div className="border-t border-blue-100/50 dark:border-blue-800/30 w-full my-3"></div>
         </div>
         
         {/* To Token Input */}
@@ -356,28 +356,48 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
         />
         
         {/* Rate and Fee Information */}
-        <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+        <div className="space-y-3 pt-3 border-t border-blue-100/50 dark:border-blue-800/30 bg-blue-50/30 backdrop-blur-sm rounded-lg p-4">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500 dark:text-gray-400">Exchange Rate</span>
-            <span className="text-gray-700 dark:text-gray-300">{getExchangeRateInfo()}</span>
+            <span className="text-blue-700/80 dark:text-blue-300/80 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+              Exchange Rate
+            </span>
+            <span className="text-blue-900 dark:text-blue-100 font-medium">{getExchangeRateInfo()}</span>
           </div>
           
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500 dark:text-gray-400">Fee ({(psmFee * 100).toFixed(2)}%)</span>
-            <span className="text-gray-700 dark:text-gray-300">{getFeeInfo() || '-'}</span>
+            <span className="text-blue-700/80 dark:text-blue-300/80 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
+              </svg>
+              Fee ({(psmFee * 100).toFixed(2)}%)
+            </span>
+            <span className="text-blue-900 dark:text-blue-100 font-medium">{getFeeInfo() || '-'}</span>
           </div>
           
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500 dark:text-gray-400">Max Swap Amount</span>
-            <span className="text-gray-700 dark:text-gray-300">
+            <span className="text-blue-700/80 dark:text-blue-300/80 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+              Max Swap Amount
+            </span>
+            <span className="text-blue-900 dark:text-blue-100 font-medium">
               {formatCurrency(getMaxSwapAmount(), fromToken.symbol === 'USDC' ? 'USD' : 'COP', 2)}
             </span>
           </div>
           
           {psmStats && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500 dark:text-gray-400">PSM Reserves</span>
-              <span className="text-gray-700 dark:text-gray-300">
+              <span className="text-blue-700/80 dark:text-blue-300/80 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                PSM Reserves
+              </span>
+              <span className="text-blue-900 dark:text-blue-100 font-medium">
                 {formatCurrency(Number(formatUnits(psmStats[1], 6)), 'USD', 2)} USDC / 
                 {formatCurrency(Number(formatUnits(psmStats[0], 6)), 'COP', 0)} VCOP
               </span>
@@ -385,8 +405,11 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
           )}
           
           {isPsmPaused && (
-            <div className="mt-2 text-center text-red-500 font-medium">
-              ⚠️ PSM is currently paused
+            <div className="mt-2 text-center bg-red-50/30 backdrop-blur-sm rounded-lg p-2 border border-red-100/50 flex items-center justify-center text-red-600 font-medium">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              PSM is currently paused
             </div>
           )}
         </div>
@@ -401,7 +424,7 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
               isSponsored={true}
             >
               <TransactionButton
-                className="w-full py-2 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg transition-colors font-medium"
+                className="w-full py-3 px-4 bg-blue-100/70 hover:bg-blue-200/70 text-blue-800 backdrop-blur-sm rounded-xl border border-blue-200/50 transition-all shadow-sm font-medium"
                 disabled={
                   !fromAmount || 
                   parseFloat(fromAmount) <= 0 || 
@@ -411,13 +434,21 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
               />
               <TransactionSponsor />
               <TransactionStatus>
-                <TransactionStatusLabel />
-                <TransactionStatusAction />
+                <div className="flex items-center gap-2 text-sm bg-blue-50/30 backdrop-blur-sm rounded-lg p-3 border border-blue-100/50 mt-3">
+                  <TransactionStatusLabel />
+                  <div className="ml-auto">
+                    <TransactionStatusAction />
+                  </div>
+                </div>
               </TransactionStatus>
               <TransactionToast>
-                <TransactionToastIcon />
-                <TransactionToastLabel />
-                <TransactionToastAction />
+                <div className="flex items-center gap-3">
+                  <TransactionToastIcon />
+                  <TransactionToastLabel />
+                  <div className="ml-auto">
+                    <TransactionToastAction />
+                  </div>
+                </div>
               </TransactionToast>
             </Transaction>
           )}
@@ -429,7 +460,7 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
             isSponsored={true}
           >
             <TransactionButton
-              className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+              className="w-full py-3 px-4 bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-800 hover:to-blue-700 text-white rounded-xl transition-all shadow-md font-medium"
               disabled={
                 !fromAmount || 
                 parseFloat(fromAmount) <= 0 || 
@@ -449,30 +480,47 @@ const SwapInterface: React.FC<SwapInterfaceProps> = ({ onSwapComplete }) => {
             />
             <TransactionSponsor />
             <TransactionStatus>
-              <TransactionStatusLabel />
-              <TransactionStatusAction />
+              <div className="flex items-center gap-2 text-sm bg-blue-50/30 backdrop-blur-sm rounded-lg p-3 border border-blue-100/50 mt-3">
+                <TransactionStatusLabel />
+                <div className="ml-auto">
+                  <TransactionStatusAction />
+                </div>
+              </div>
             </TransactionStatus>
             <TransactionToast>
-              <TransactionToastIcon />
-              <TransactionToastLabel />
-              <TransactionToastAction />
+              <div className="flex items-center gap-3">
+                <TransactionToastIcon />
+                <TransactionToastLabel />
+                <div className="ml-auto">
+                  <TransactionToastAction />
+                </div>
+              </div>
             </TransactionToast>
           </Transaction>
         </div>
         
         {/* Recent Transactions */}
         {recentTransactions.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Recent Transactions</h3>
-            <div className="space-y-2">
+          <div className="mt-4 pt-4 border-t border-blue-100/50 dark:border-blue-800/30">
+            <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Recent Transactions
+            </h3>
+            <div className="space-y-2 bg-blue-50/30 backdrop-blur-sm rounded-lg p-3 border border-blue-100/50">
               {recentTransactions.map((tx, index) => (
                 <div key={index} className="flex justify-between items-center text-sm">
                   <div className="flex items-center">
-                    <span className="text-gray-600 dark:text-gray-400">
+                    <span className="text-blue-800 dark:text-blue-200">
                       {tx.fromToken} to {tx.toToken}
                     </span>
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded ${tx.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'}`}>
+                  <span className={`text-xs px-2 py-1 rounded-full ${
+                    tx.status === 'completed' 
+                      ? 'bg-green-100/80 text-green-800 dark:bg-green-900/60 dark:text-green-200 border border-green-200/50' 
+                      : 'bg-yellow-100/80 text-yellow-800 dark:bg-yellow-900/60 dark:text-yellow-200 border border-yellow-200/50'
+                  }`}>
                     {tx.status}
                   </span>
                 </div>

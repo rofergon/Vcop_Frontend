@@ -143,7 +143,7 @@ export default function ActiveLoans() {
       <div className="flex justify-center items-center h-48">
         <div className="flex flex-col items-center">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-t-2 border-blue-500"></div>
-          <p className="text-blue-500 mt-4 text-sm">Cargando préstamos...</p>
+          <p className="text-blue-500 mt-4 text-sm">Loading loans...</p>
         </div>
       </div>
     );
@@ -155,8 +155,8 @@ export default function ActiveLoans() {
         <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-blue-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
         </svg>
-        <p className="text-blue-700 font-medium mb-2">No tienes préstamos activos</p>
-        <p className="text-blue-500/80 text-sm text-center">¡Crea un nuevo préstamo para comenzar a usar la plataforma!</p>
+        <p className="text-blue-700 font-medium mb-2">You don't have any active loans</p>
+        <p className="text-blue-500/80 text-sm text-center">Create a new loan to start using the platform!</p>
       </div>
     );
   }
@@ -196,7 +196,7 @@ function PositionCard({ position }: { position: Position }) {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            Posición #{position.positionId + 1}
+            Position #{position.positionId + 1}
           </h3>
           <p className="text-sm text-blue-500/80 mt-1 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -215,14 +215,14 @@ function PositionCard({ position }: { position: Position }) {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
-              En riesgo
+              At risk
             </>
           ) : (
             <>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
-              Seguro
+              Safe
             </>
           )}
         </div>
@@ -234,7 +234,7 @@ function PositionCard({ position }: { position: Position }) {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
             </svg>
-            Deuda:
+            Debt:
           </span>
           <span className="font-medium text-blue-900">{formatEther(position.vcopMinted)} VCOP</span>
         </div>
@@ -243,7 +243,7 @@ function PositionCard({ position }: { position: Position }) {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
-            Ratio de colateral:
+            Collateral ratio:
           </span>
           <span className={`font-medium ${
             position.isAtRisk ? 'text-red-600' : 'text-green-600'
@@ -273,7 +273,7 @@ function PositionCard({ position }: { position: Position }) {
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
-          Añadir Colateral
+          Add Collateral
         </button>
         <button
           onClick={() => handleRepayDebt(position.positionId)}
@@ -282,7 +282,7 @@ function PositionCard({ position }: { position: Position }) {
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
           </svg>
-          Pagar Deuda
+          Repay Debt
         </button>
         {!position.isAtRisk && (
           <button
@@ -293,7 +293,7 @@ function PositionCard({ position }: { position: Position }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
-            Retirar Colateral
+            Withdraw Collateral
           </button>
         )}
       </div>

@@ -228,16 +228,16 @@ export default function CreateLoanForm() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium">Crear préstamo</h3>
+        <h3 className="text-lg font-medium">Create loan</h3>
         <p className="text-sm text-gray-500">
-          Deposita tu colateral en USDC y recibe tokens VCOP a cambio
+          Deposit your collateral in USDC and receive VCOP tokens in return
         </p>
       </div>
       
       {/* Collateral input */}
       <div>
         <label className="block text-sm font-medium text-gray-700">
-          Cantidad de colateral (USDC)
+          Collateral amount (USDC)
         </label>
         <div className="mt-1 relative rounded-md shadow-sm">
           <input
@@ -257,9 +257,12 @@ export default function CreateLoanForm() {
       <div>
         <div className="flex justify-between items-center">
           <label className="block text-sm font-medium text-gray-700">
-            Tasa de utilización: {utilizationRate}%
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            Utilization rate: <span className="font-bold ml-1">{utilizationRate}%</span>
           </label>
-          <span className="text-sm text-blue-600">Máx: 80%</span>
+          <span className="text-sm text-blue-600 font-medium">Max: {MAX_UTILIZATION_RATE}%</span>
         </div>
         <input
           type="range"
@@ -279,30 +282,38 @@ export default function CreateLoanForm() {
       {/* VCOP to receive */}
       <div className="p-4 bg-gray-50 rounded-md">
         <div className="flex justify-between items-center">
-          <span className="text-sm font-medium">VCOP a recibir</span>
-          <div className={`text-sm font-medium px-2 py-1 rounded-full ${
-            isValidPosition ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+          <span className="text-sm font-medium">VCOP to receive</span>
+          <div className={`text-sm font-medium px-2 py-1 rounded-full flex items-center ${
+            isValidPosition ? "bg-green-100/80 text-green-800" : "bg-red-100/80 text-red-800"
           }`}>
-            {isValidPosition ? 'Posición segura' : 'Posición riesgosa'}
+            {isValidPosition ? (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                Safe position
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Risky position
+              </>
+            )}
           </div>
         </div>
-        <div className="mt-2">
-          <p className="text-2xl font-bold">
-            {parseFloat(vcopToReceive).toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 6
-            })}
-            <span className="text-gray-500 text-sm ml-2">VCOP</span>
-          </p>
-          <p className="text-sm text-gray-500 mt-1">
-            Tasa de conversión: 1 USDC = {USDC_TO_VCOP_RATE} VCOP
-          </p>
+        <div className="flex items-center text-2xl font-bold text-blue-900 py-2">
+          {parseFloat(vcopToReceive).toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 6
+          })} <span className="ml-1 text-sm font-normal text-blue-500/80">VCOP</span>
         </div>
         
         {/* Ratio information */}
         <div className="mt-4 flex justify-between items-center text-sm">
           <div className="flex items-center gap-1">
-            <span className="text-gray-600">Ratio de colateralización:</span>
+            <span className="text-blue-700">Collateralization ratio:</span>
             <span className={`font-medium ${
               collateralRatio >= 200 ? "text-green-600" : 
               collateralRatio >= 150 ? "text-yellow-600" : 
@@ -311,7 +322,7 @@ export default function CreateLoanForm() {
               {collateralRatio.toFixed(2)}%
             </span>
           </div>
-          <span className="text-gray-500">Mínimo: {MIN_COLLATERALIZATION_RATIO}%</span>
+          <span className="text-blue-500">Minimum: 150%</span>
         </div>
         
         {/* Progress bar for ratio */}
@@ -329,16 +340,12 @@ export default function CreateLoanForm() {
       
       {/* Error message for invalid position */}
       {!isValidPosition && collateralAmount !== '100' && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-md">
-          <div className="flex">
-            <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-            <p className="ml-3 text-sm text-red-700">
-              La colateralización debe ser de al menos {MIN_COLLATERALIZATION_RATIO}% para crear una posición.
-              Reduzca la tasa de utilización o aumente el colateral.
-            </p>
-          </div>
+        <div className="p-4 bg-red-50/30 backdrop-blur-sm border border-red-200/50 rounded-xl text-sm text-red-700 flex items-start">
+          <svg className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p>Collateralization must be at least 150% to create a position.
+          Reduce utilization rate or increase collateral.</p>
         </div>
       )}
       
@@ -357,8 +364,8 @@ export default function CreateLoanForm() {
                   ? 'bg-blue-600 hover:bg-blue-700' 
                   : 'bg-gray-400 cursor-not-allowed'
               }`}
-              text={needsApproval ? "Aprobar USDC" : "Crear posición de préstamo"}
-              disabled={!isValidPosition || collateralAmount === '100'}
+              text={needsApproval ? "Approve USDC" : "Create loan position"}
+              disabled={!isValidPosition || collateralAmount === ''}
               data-transaction-button
             />
             <div className="mt-4">
@@ -394,9 +401,12 @@ export default function CreateLoanForm() {
       
       {/* Informational note */}
       <div className="text-xs text-gray-600 mt-4">
-        <p>Este préstamo utiliza USDC como colateral para obtener tokens VCOP. 
-        Asegúrese de mantener un ratio de colateralización saludable para evitar 
-        liquidaciones.</p>
+        <p>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 flex-shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          This loan uses USDC as collateral to obtain VCOP tokens. Make sure to maintain a healthy collateralization ratio to avoid liquidations.
+        </p>
       </div>
     </div>
   );

@@ -4,6 +4,8 @@ import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import Dashboard from './pages/Dashboard';
 import LoansPage from './pages/LoansPage';
+import SwapPage from './pages/SwapPage';
+import StatsPage from './pages/StatsPage';
 import { Sun, Moon } from 'lucide-react';
 import { useDarkMode } from './context/DarkModeContext';
 
@@ -12,23 +14,25 @@ function App() {
   
   return (
     <Router>
-      <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
         <Header />
         
         {/* Theme Toggle Button */}
         <button
           onClick={toggleDarkMode}
-          className="fixed bottom-4 right-4 p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-300 dark:bg-gray-800 dark:text-white z-10"
+          className="fixed bottom-4 right-4 p-3 rounded-full bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 dark:bg-gray-800/80 dark:text-white z-10 border border-blue-100/50 dark:border-blue-800/30"
           aria-label="Toggle theme"
         >
           {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
         </button>
         
-        <main className="flex-grow">
+        <main className="flex-grow container mx-auto px-4 py-8">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/dashboard" element={<Navigate to="/" replace />} />
             <Route path="/loans" element={<LoansPage />} />
+            <Route path="/swap" element={<SwapPage />} />
+            <Route path="/stats" element={<StatsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

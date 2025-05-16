@@ -2,13 +2,11 @@ import React, { useState, useEffect } from 'react';
 import Card from '../common/Card';
 import { Transaction } from '../../types';
 import { formatRelativeTime, formatAddress, formatCurrency } from '../../utils/helpers';
-import { useChainId, useAccount, usePublicClient } from 'wagmi';
+import { useChainId, useAccount } from 'wagmi';
 import { 
   formatUnits, 
   createPublicClient, 
   http, 
-  parseAbiItem, 
-  decodeEventLog,
   keccak256,
   toHex,
   type Log
@@ -16,7 +14,6 @@ import {
 import { baseSepolia } from 'viem/chains';
 
 // Import ABIs
-import VCOPCollateralHookABI from '../../Abis/VCOPCollateralHook.json';
 
 interface TransactionListProps {
   title?: string;
@@ -131,9 +128,8 @@ const TransactionList: React.FC<TransactionListProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   
   // Get connected account and network
-  const { address } = useAccount();
+  useAccount();
   const chainId = useChainId();
-  const publicClient = usePublicClient();
   
   // Environment variables
   const vcopCollateralHookAddress = import.meta.env.VITE_VCOP_COLLATERAL_HOOK_ADDRESS as `0x${string}`;
@@ -193,7 +189,6 @@ const TransactionList: React.FC<TransactionListProps> = ({
             
             // Extract parameters from data
             // First 32 bytes (64 hex chars) is the account (padded to 32 bytes)
-            const account = '0x' + data.slice(24, 64); // Skip first 24 bytes of padding
             
             // Next 32 bytes is the isVcopToCollateral boolean
             const isVcopToCollateral = parseInt(data.slice(64, 128), 16) !== 0;
@@ -281,7 +276,6 @@ const TransactionList: React.FC<TransactionListProps> = ({
                     const data = log.data.slice(2); // Remove '0x' prefix
                     
                     // Extract parameters from data
-                    const account = '0x' + data.slice(24, 64); // Skip first 24 bytes of padding
                     const isVcopToCollateral = parseInt(data.slice(64, 128), 16) !== 0;
                     const amountIn = BigInt('0x' + data.slice(128, 192));
                     const amountOut = BigInt('0x' + data.slice(192, 256));
@@ -369,19 +363,28 @@ const TransactionList: React.FC<TransactionListProps> = ({
     switch (status) {
       case 'completed':
         return (
-          <span className="inline-flex px-2 text-xs font-semibold leading-5 rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+          <span className="inline-flex items-center px-2 text-xs font-semibold leading-5 rounded-full bg-green-100/80 text-green-800 dark:bg-green-900/60 dark:text-green-200 border border-green-200/50">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
             Completed
           </span>
         );
       case 'pending':
         return (
-          <span className="inline-flex px-2 text-xs font-semibold leading-5 rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+          <span className="inline-flex items-center px-2 text-xs font-semibold leading-5 rounded-full bg-yellow-100/80 text-yellow-800 dark:bg-yellow-900/60 dark:text-yellow-200 border border-yellow-200/50">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
             Pending
           </span>
         );
       case 'failed':
         return (
-          <span className="inline-flex px-2 text-xs font-semibold leading-5 rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+          <span className="inline-flex items-center px-2 text-xs font-semibold leading-5 rounded-full bg-red-100/80 text-red-800 dark:bg-red-900/60 dark:text-red-200 border border-red-200/50">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
             Failed
           </span>
         );
@@ -391,23 +394,32 @@ const TransactionList: React.FC<TransactionListProps> = ({
   };
   
   return (
-    <Card title={title} className="h-full bg-gradient-to-br from-white to-blue-50 dark:from-gray-900 dark:to-gray-800">
+    <Card title={title} className="h-full bg-gradient-to-br from-blue-50/80 to-indigo-50/80 backdrop-blur-sm border border-blue-100/50 shadow-lg hover:shadow-xl transition-all dark:from-blue-900/20 dark:to-indigo-900/20 dark:border-blue-800/30">
       {isLoading ? (
-        <div className="text-center py-4 text-gray-500 dark:text-gray-400">
-          Loading transactions...
+        <div className="flex flex-col items-center justify-center py-8 text-blue-600/80 dark:text-blue-400/80">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-t-2 border-blue-500 mb-3"></div>
+          <div>Loading transactions...</div>
         </div>
       ) : transactions.length === 0 ? (
-        <div className="text-center py-4 text-gray-500 dark:text-gray-400">
-          No transactions found
+        <div className="flex flex-col items-center justify-center py-12 text-blue-600/80 dark:text-blue-400/80 bg-blue-50/30 backdrop-blur-sm rounded-xl border border-blue-100/50">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-blue-400/60 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <div>No transactions found</div>
         </div>
       ) : (
-        <div className="divide-y divide-gray-200 dark:divide-gray-700 -mt-2">
+        <div className="divide-y divide-blue-100/50 dark:divide-blue-800/30 -mt-2">
           {transactions.map((tx) => (
-            <div key={tx.id} className="py-4 first:pt-0 last:pb-0">
+            <div key={tx.id} className="py-4 first:pt-0 last:pb-0 hover:bg-blue-50/40 transition-colors rounded-lg px-2">
               <div className="flex justify-between items-start">
                 <div>
                   <div className="flex items-center">
-                    <span className="font-medium text-gray-900 dark:text-white">
+                    <span className="font-medium text-blue-900 dark:text-blue-100 flex items-center">
+                      {tx.type === 'swap' && (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                      )}
                       {tx.type === 'swap' 
                         ? `Swap ${tx.fromToken} to ${tx.toToken}`
                         : `Approve ${tx.fromToken}`}
@@ -415,22 +427,30 @@ const TransactionList: React.FC<TransactionListProps> = ({
                   </div>
                   <div className="mt-1 text-sm">
                     {tx.type === 'swap' && (
-                      <span className="text-gray-600 dark:text-gray-400">
+                      <span className="text-blue-700/80 dark:text-blue-300/80 bg-blue-50/50 px-2 py-1 rounded-md border border-blue-100/30">
                         {tx.fromToken === 'USDC' 
                           ? `${formatCurrency(tx.fromAmount, 'USD', 2)} → ${formatCurrency(tx.toAmount, 'COP', 0)}`
                           : `${formatCurrency(tx.fromAmount, 'COP', 0)} → ${formatCurrency(tx.toAmount, 'USD', 2)}`}
                       </span>
                     )}
                   </div>
-                  <div className="mt-1 flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
-                    <span>{formatRelativeTime(tx.timestamp)}</span>
+                  <div className="mt-2 flex items-center space-x-2 text-xs text-blue-600/70 dark:text-blue-400/70">
+                    <span className="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {formatRelativeTime(tx.timestamp)}
+                    </span>
                     <span>•</span>
                     <a 
                       href={`${explorerUrl}/tx/${tx.hash}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                      className="text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300 flex items-center"
                     >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
                       {formatAddress(tx.hash)}
                     </a>
                   </div>
