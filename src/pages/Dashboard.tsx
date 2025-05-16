@@ -35,7 +35,8 @@ const Dashboard: React.FC = () => {
         className="mb-12 text-center relative"
       >
         {/* Modern title with animated underline */}
-        <h1 className="text-5xl lg:text-6xl font-extrabold mb-6 relative tracking-tight">
+        <h1 className="text-5xl lg:text-6xl font-extrabold mb-6 relative tracking-tight flex items-center justify-center gap-4">
+          <img src="/logo.png" alt="VCOP Logo" className="w-16 h-16 object-contain" />
           <span className="relative inline-block pb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-300 dark:to-indigo-300 drop-shadow-sm">
             VCOP Stablecoin PSM
             <motion.div 

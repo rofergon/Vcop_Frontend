@@ -76,8 +76,11 @@ const Header: React.FC<HeaderProps> = () => {
         <div className="flex flex-wrap items-center justify-between gap-4 py-3">
           {/* Logo and Network Badge */}
           <div className="flex items-center flex-shrink-0">
-            <Link to="/" className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-500 dark:from-blue-400 dark:to-blue-300">
-              VCOP
+            <Link to="/" className="flex items-center gap-2 text-2xl font-bold">
+              <img src="/logo.png" alt="VCOP Logo" className="w-8 h-8 object-contain" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-500 dark:from-blue-400 dark:to-blue-300">
+                VCOP
+              </span>
             </Link>
             <span className="ml-2 text-sm px-3 py-1 rounded-xl bg-blue-100/60 backdrop-blur-sm text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium border border-blue-200/50 dark:border-blue-800/30 shadow-sm">
               PSM
