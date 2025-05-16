@@ -20,34 +20,29 @@ import {
   ERC20_ALLOWANCE_ABI
 } from '../../utils/transactionUtils';
 import { Wallet, ConnectWallet } from '@coinbase/onchainkit/wallet';
+import { Avatar, Name } from '@coinbase/onchainkit/identity';
 
 // Constantes para manejo de decimales
 const DECIMALS = 6;
 const DECIMAL_FACTOR = 10 ** DECIMALS;
+const USDC_TO_VCOP_RATE = 4200; // 1 USDC = 4200 VCOP
 
 // Enumeración para estados de transacción según OnchainKit
-type TransactionStateType = 'transactionIdle' | 'transactionPending' | 'success' | 'error' | 'completed';
+type TransactionStateType = 'transactionIdle' | 'transactionPending' | 'success' | 'error' | 'init' | 'buildingTransaction' | 'transactionLegacyExecuted' | 'reset';
 
 const TransactionState: Record<string, TransactionStateType> = {
   IDLE: 'transactionIdle',
   PENDING: 'transactionPending',
   SUCCESS: 'success',
   ERROR: 'error',
-  COMPLETED: 'completed'
+  INIT: 'init',
+  BUILDING: 'buildingTransaction',
+  LEGACY: 'transactionLegacyExecuted',
+  RESET: 'reset'
 } as const;
 
-// USDC ABI (solo las funciones necesarias)
+// USDC ABI para verificar allowance
 const USDC_ABI = [
-  {
-    name: 'approve',
-    type: 'function',
-    stateMutability: 'nonpayable',
-    inputs: [
-      { name: 'spender', type: 'address' },
-      { name: 'amount', type: 'uint256' }
-    ],
-    outputs: [{ type: 'bool' }]
-  },
   {
     name: 'allowance',
     type: 'function',
@@ -57,21 +52,21 @@ const USDC_ABI = [
       { name: 'spender', type: 'address' }
     ],
     outputs: [{ type: 'uint256' }]
+  },
+  {
+    name: 'approve',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'spender', type: 'address' },
+      { name: 'amount', type: 'uint256' }
+    ],
+    outputs: [{ type: 'bool' }]
   }
 ];
 
-// Collateral Manager ABI
+// Collateral Manager ABI (solo las funciones necesarias)
 const COLLATERAL_MANAGER_ABI = [
-  {
-    name: 'getMaxVCOPforCollateral',
-    type: 'function',
-    stateMutability: 'view',
-    inputs: [
-      { name: 'collateralToken', type: 'address' },
-      { name: 'amount', type: 'uint256' }
-    ],
-    outputs: [{ name: '', type: 'uint256' }]
-  },
   {
     name: 'createPosition',
     type: 'function',
@@ -100,79 +95,55 @@ export default function LoanCreator() {
   const config = useConfig();
   
   // Usamos valores amigables para el usuario (sin los 6 decimales)
-  const [displayCollateralAmount, setDisplayCollateralAmount] = useState('100');
-  const [displayVcopAmount, setDisplayVcopAmount] = useState('0');
+  const [collateralAmount, setCollateralAmount] = useState('100');
   const [utilizationRate, setUtilizationRate] = useState(SAFE_UTILIZATION_RATE);
-  const [transactionStatus, setTransactionStatus] = useState<string>("");
-  const [needsApproval, setNeedsApproval] = useState(false);
+  const [vcopToReceive, setVcopToReceive] = useState('0');
+  const [collateralRatio, setCollateralRatio] = useState(125);
+  const [isValidPosition, setIsValidPosition] = useState(false);
   const [transactionState, setTransactionState] = useState<TransactionStateType>(TransactionState.IDLE);
   const [transactionHash, setTransactionHash] = useState<string>("");
+  const [needsApproval, setNeedsApproval] = useState(false);
   
   // Contract addresses from environment variables
   const collateralManagerAddress = import.meta.env.VITE_VCOP_COLLATERAL_MANAGER_ADDRESS as `0x${string}`;
   const usdcAddress = import.meta.env.VITE_USDC_ADDRESS as `0x${string}`;
-  
-  // Convertimos el valor de entrada a la cantidad real con 6 decimales para transacciones blockchain
-  const parsedCollateral = parseUnits(displayCollateralAmount || '0', DECIMALS);
   
   // Check USDC allowance
   const { data: allowance } = useContractRead({
     address: usdcAddress,
     abi: USDC_ABI,
     functionName: 'allowance',
-    args: [address as `0x${string}`, collateralManagerAddress],
-    query: {
-      enabled: !!address
-    }
+    args: address && collateralManagerAddress ? [address, collateralManagerAddress] : undefined,
+    chainId: 84532,
   });
 
-  // Get max VCOP that can be minted with provided collateral
-  const { data: maxVcop, refetch } = useContractRead({
-    address: collateralManagerAddress,
-    abi: COLLATERAL_MANAGER_ABI,
-    functionName: 'getMaxVCOPforCollateral',
-    args: [usdcAddress, parsedCollateral],
-    query: {
-      enabled: !!address && !!collateralManagerAddress && !!usdcAddress && parsedCollateral > 0n,
-    }
-  });
-
-  // Check if approval is needed
+  // Check if approval is needed when allowance or collateral amount changes
   useEffect(() => {
-    if (allowance && parsedCollateral > 0n) {
-      setNeedsApproval(BigInt(allowance.toString()) < parsedCollateral);
+    if (allowance && collateralAmount) {
+      const parsedCollateral = parseUnits(collateralAmount, 6);
+      setIsValidPosition(BigInt(allowance.toString()) >= parsedCollateral);
     }
-  }, [allowance, parsedCollateral]);
+  }, [allowance, collateralAmount]);
 
-  // Update VCOP amount when collateral amount or utilization rate changes
+  // Update VCOP amount and ratio when collateral or utilization rate changes
   useEffect(() => {
-    if (maxVcop) {
-      // Valor real con todos los decimales
-      const maxAmount = Number(formatUnits(maxVcop as bigint, DECIMALS));
+    if (collateralAmount && !isNaN(Number(collateralAmount))) {
+      const amount = parseFloat(collateralAmount);
+      // Calculate VCOP to receive based on utilization rate and conversion rate
+      // For example: 100 USDC * 4200 * 80% = 336,000 VCOP
+      const baseVcopAmount = amount * USDC_TO_VCOP_RATE;
+      const vcop = baseVcopAmount * (utilizationRate / 100);
+      setVcopToReceive(vcop.toFixed(2));
       
-      // Usar el ratio de utilización seguro
-      const safeUtilizationRate = Math.min(utilizationRate, SAFE_UTILIZATION_RATE);
-      const calculatedAmount = (maxAmount * safeUtilizationRate) / 100;
-      
-      // Establecemos el valor formateado para mostrar (sin 6 ceros adicionales)
-      setDisplayVcopAmount(calculatedAmount.toFixed(2));
+      // Calculate collateral ratio
+      // For example: (100 USDC * 4200) / (336,000 VCOP) * 100 = 125%
+      if (vcop > 0) {
+        const ratio = (amount * USDC_TO_VCOP_RATE) / vcop * 100;
+        setCollateralRatio(ratio);
+        setIsValidPosition(ratio >= MIN_COLLATERALIZATION_RATIO);
+      }
     }
-  }, [maxVcop, utilizationRate]);
-
-  // Calculate current collateralization ratio
-  const collateralizationRatio = maxVcop && Number(displayVcopAmount) > 0
-    ? Math.floor(Number(formatUnits(maxVcop as bigint, DECIMALS)) * 100 / Number(displayVcopAmount))
-    : 0;
-    
-  // Determina si la posición es segura
-  const isPositionSafe = collateralizationRatio >= MIN_COLLATERALIZATION_RATIO;
-
-  // Refetch when collateral amount changes
-  useEffect(() => {
-    if (address && displayCollateralAmount && parseFloat(displayCollateralAmount) > 0) {
-      refetch();
-    }
-  }, [address, displayCollateralAmount, refetch]);
+  }, [collateralAmount, utilizationRate]);
 
   // Handle utilization slider change
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,120 +155,104 @@ export default function LoanCreator() {
   const handleCollateralChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (value === '' || /^\d*\.?\d*$/.test(value)) { // Solo números y un punto decimal
-      setDisplayCollateralAmount(value);
+      setCollateralAmount(value);
     }
   };
 
-  // Prepare transaction calls
+  // Handle transaction status changes
+  const handleStatus = useCallback((status: LifecycleStatus) => {
+    console.log('\n=== TRANSACTION STATUS UPDATE ===');
+    console.log('Status:', status);
+
+    setTransactionState(status.statusName as TransactionStateType);
+
+    if (status.statusName === 'success') {
+      if (needsApproval) {
+        // Si la aprobación fue exitosa, actualizar el estado y forzar una nueva transacción
+        setNeedsApproval(false);
+        
+        // Pequeño delay para asegurar que la UI se actualice
+        setTimeout(() => {
+          // Forzar una nueva transacción para crear la posición
+          const createPositionButton = document.querySelector('button[data-transaction-button]');
+          if (createPositionButton instanceof HTMLButtonElement) {
+            createPositionButton.click();
+          }
+        }, 1000);
+      } else {
+        // Si fue la creación de posición, resetear el formulario
+        setCollateralAmount('100');
+        setUtilizationRate(SAFE_UTILIZATION_RATE);
+        setVcopToReceive('0');
+        setCollateralRatio(125);
+        setIsValidPosition(false);
+      }
+    }
+  }, [needsApproval]);
+
+  // Function to get transaction calls
   const getCalls = useCallback(async () => {
+    if (!collateralAmount || !vcopToReceive || !address) return [];
+
+    const parsedCollateral = parseUnits(collateralAmount, 6);
+    const parsedVcop = parseUnits(vcopToReceive, 6);
+
     console.log('\n=== TRANSACTION PREPARATION LOGS ===');
-    
-    // Convertir valores a BigInt con 6 decimales para transacciones blockchain
-    const collateralAmountBigInt = parseUnits(displayCollateralAmount || '0', DECIMALS);
-    const vcopAmountBigInt = parseUnits(displayVcopAmount || '0', DECIMALS);
-    
+    console.log('Collateral Amount:', collateralAmount, 'USDC');
+    console.log('VCOP to Mint:', vcopToReceive, 'VCOP');
+    console.log('Needs Approval:', needsApproval);
+
     if (needsApproval) {
-      // Encode approve function data
+      // Solo aprobación si se necesita
+      console.log('Generating approval transaction');
       const approveData = encodeFunctionData({
         abi: USDC_ABI,
         functionName: 'approve',
-        args: [collateralManagerAddress, collateralAmountBigInt]
+        args: [collateralManagerAddress, parsedCollateral]
       });
-      
-      console.log('Approve Transaction Data:', approveData);
-      
+
       return [{
         to: usdcAddress,
         value: BigInt(0),
         data: approveData
       }];
-    }
-    
-    // Encode createPosition function data
-    const createPositionData = encodeFunctionData({
-      abi: COLLATERAL_MANAGER_ABI,
-      functionName: 'createPosition',
-      args: [usdcAddress, collateralAmountBigInt, vcopAmountBigInt]
-    });
-    
-    console.log('Create Position Transaction Data:', createPositionData);
-    console.log('Collateral Amount (with decimals):', collateralAmountBigInt.toString());
-    console.log('VCOP Amount (with decimals):', vcopAmountBigInt.toString());
-    
-    return [{
-      to: collateralManagerAddress,
-      value: BigInt(0),
-      data: createPositionData
-    }];
-  }, [
-    needsApproval,
-    usdcAddress,
-    collateralManagerAddress,
-    displayCollateralAmount,
-    displayVcopAmount,
-    address
-  ]);
+    } else {
+      // Crear posición si ya tenemos la aprobación
+      console.log('Generating create position transaction');
+      const createPositionData = encodeFunctionData({
+        abi: COLLATERAL_MANAGER_ABI,
+        functionName: 'createPosition',
+        args: [usdcAddress, parsedCollateral, parsedVcop]
+      });
 
-  // Handle transaction status changes
-  const handleStatusChange = useCallback((status: LifecycleStatus) => {
-    // Si ya completamos la transacción, no procesar más actualizaciones
-    if (transactionState === TransactionState.COMPLETED) {
-      return;
+      return [{
+        to: collateralManagerAddress,
+        value: BigInt(0),
+        data: createPositionData
+      }];
     }
-
-    console.log('\n=== TRANSACTION STATUS UPDATE ===');
-    console.log('Status:', status);
-    
-    switch (status.statusName) {
-      case 'transactionPending':
-        setTransactionState(TransactionState.PENDING);
-        break;
-      case 'success':
-        // Solo actualizar si no estamos ya en estado SUCCESS o COMPLETED
-        if (transactionState !== TransactionState.SUCCESS && transactionState !== TransactionState.COMPLETED) {
-          setTransactionState(TransactionState.SUCCESS);
-          // En caso de éxito, el hash estará en el último recibo de transacción
-          if (status.statusData?.transactionReceipts?.length > 0) {
-            const lastReceipt = status.statusData.transactionReceipts[status.statusData.transactionReceipts.length - 1];
-            setTransactionHash(lastReceipt.transactionHash);
-          }
-          if (needsApproval) {
-            setNeedsApproval(false);
-          }
-        }
-        break;
-      case 'error':
-        setTransactionState(TransactionState.ERROR);
-        break;
-      default:
-        if (transactionState !== TransactionState.SUCCESS && transactionState !== TransactionState.COMPLETED) {
-          setTransactionState(TransactionState.IDLE);
-        }
-    }
-  }, [needsApproval, transactionState]);
+  }, [collateralAmount, vcopToReceive, needsApproval, address, usdcAddress, collateralManagerAddress]);
 
   // Función para cerrar el modal
   const handleCloseModal = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     // Solo cerrar si se hace clic en el fondo oscuro (no en el contenido del modal)
     if ((e.target as HTMLDivElement).id === 'modal-backdrop') {
-      setTransactionState(TransactionState.COMPLETED);
-      setDisplayCollateralAmount('100');
-      setDisplayVcopAmount('0');
+      setTransactionState(TransactionState.RESET);
+      setCollateralAmount('100');
       setUtilizationRate(SAFE_UTILIZATION_RATE);
     }
   }, []);
 
   // Función para reiniciar el formulario
   const handleReset = useCallback(() => {
-    setTransactionState(TransactionState.COMPLETED);
-    setDisplayCollateralAmount('100');
-    setDisplayVcopAmount('0');
+    setTransactionState(TransactionState.RESET);
+    setCollateralAmount('100');
     setUtilizationRate(SAFE_UTILIZATION_RATE);
   }, []);
 
   // Componente de mensaje de éxito
   const SuccessMessage = () => {
-    if (transactionState !== TransactionState.SUCCESS || needsApproval) return null;
+    if (transactionState !== TransactionState.SUCCESS || !isValidPosition) return null;
 
     return (
       <div 
@@ -336,22 +291,23 @@ export default function LoanCreator() {
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-300">Colateral depositado:</span>
                   <span className="font-medium text-gray-900 dark:text-white">
-                    {formatNumberWithCommas(displayCollateralAmount)} USDC
+                    {formatNumberWithCommas(collateralAmount)} USDC
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-300">VCOP recibido:</span>
                   <span className="font-medium text-gray-900 dark:text-white">
-                    {formatNumberWithCommas(displayVcopAmount)} VCOP
+                    {formatNumberWithCommas(vcopToReceive)} VCOP
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-300">Ratio de colateralización:</span>
                   <span className={`font-medium ${
-                    collateralizationRatio >= 200 ? "text-green-600 dark:text-green-400" : 
-                    "text-yellow-600 dark:text-yellow-400"
+                    collateralRatio >= 200 ? "text-green-600 dark:text-green-400" : 
+                    collateralRatio >= 150 ? "text-yellow-600 dark:text-yellow-400" : 
+                    "text-red-600 dark:text-red-400"
                   }`}>
-                    {collateralizationRatio}%
+                    {collateralRatio.toFixed(2)}%
                   </span>
                 </div>
               </div>
@@ -397,7 +353,7 @@ export default function LoanCreator() {
               <div className="relative">
                 <input
                   type="text"
-                  value={displayCollateralAmount}
+                  value={collateralAmount}
                   onChange={handleCollateralChange}
                   className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   min="0.000001"
@@ -434,23 +390,23 @@ export default function LoanCreator() {
               <div className="flex justify-between mb-1">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-200">VCOP a recibir</label>
                 <div className={`text-sm font-medium px-2 py-1 rounded-full ${
-                  isPositionSafe ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                  isValidPosition ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                 }`}>
-                  {isPositionSafe ? 'Posición segura' : 'Posición riesgosa'}
+                  {isValidPosition ? 'Posición segura' : 'Posición riesgosa'}
                 </div>
               </div>
               <div className="flex items-center text-2xl font-bold text-gray-900 dark:text-white py-2">
-                {formatNumberWithCommas(displayVcopAmount)} <span className="ml-1 text-sm font-normal text-gray-500 dark:text-gray-400">VCOP</span>
+                {vcopToReceive} <span className="ml-1 text-sm font-normal text-gray-500 dark:text-gray-400">VCOP</span>
               </div>
               <div className="flex justify-between text-sm">
                 <div className="flex items-center gap-1">
                   <span className="text-gray-600 dark:text-gray-300">Ratio de colateralización:</span>
                   <span className={`font-medium ${
-                    collateralizationRatio >= 200 ? "text-green-600 dark:text-green-400" : 
-                    collateralizationRatio >= 150 ? "text-yellow-600 dark:text-yellow-400" : 
+                    collateralRatio >= 200 ? "text-green-600 dark:text-green-400" : 
+                    collateralRatio >= 150 ? "text-yellow-600 dark:text-yellow-400" : 
                     "text-red-600 dark:text-red-400"
                   }`}>
-                    {collateralizationRatio}%
+                    {collateralRatio.toFixed(2)}%
                   </span>
                 </div>
                 <span className="text-gray-500 dark:text-gray-400">Mínimo: 150%</span>
@@ -460,16 +416,16 @@ export default function LoanCreator() {
               <div className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-full mt-2">
                 <div 
                   className={`h-2 rounded-full ${
-                    collateralizationRatio >= 200 ? "bg-green-500" : 
-                    collateralizationRatio >= 150 ? "bg-yellow-500" : 
+                    collateralRatio >= 200 ? "bg-green-500" : 
+                    collateralRatio >= 150 ? "bg-yellow-500" : 
                     "bg-red-500"
                   }`}
-                  style={{ width: `${Math.min(100, (collateralizationRatio / 250) * 100)}%` }}
+                  style={{ width: `${Math.min(100, (collateralRatio / 250) * 100)}%` }}
                 ></div>
               </div>
             </div>
             
-            {!isPositionSafe && (
+            {!isValidPosition && collateralAmount !== '' && (
               <div className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
                 <div className="flex items-start">
                   <svg className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -483,21 +439,22 @@ export default function LoanCreator() {
 
             {isConnected ? (
               <Transaction 
-                chainId={BASE_SEPOLIA_CHAIN_ID}
+                chainId={84532}
                 calls={getCalls}
-                onStatus={handleStatusChange}
+                onStatus={handleStatus}
                 onError={(error) => {
                   console.error('Transaction Error:', error);
                 }}
               >
                 <TransactionButton 
-                  className={`w-full py-3 px-4 font-medium text-base rounded-lg transition-colors ${
-                    isPositionSafe 
-                      ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm" 
-                      : "bg-gray-400 text-white cursor-not-allowed"
+                  className={`w-full py-3 px-4 text-white font-medium rounded-md ${
+                    isValidPosition && collateralAmount !== '' 
+                      ? 'bg-blue-600 hover:bg-blue-700' 
+                      : 'bg-gray-400 cursor-not-allowed'
                   }`}
-                  disabled={!isPositionSafe}
                   text={needsApproval ? "Aprobar USDC" : "Crear posición de préstamo"}
+                  disabled={!isValidPosition || collateralAmount === ''}
+                  data-transaction-button
                 />
                 
                 <div className="mt-4">
