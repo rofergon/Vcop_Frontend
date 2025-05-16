@@ -104,6 +104,7 @@ const loadStoredTransactions = (): Transaction[] => {
       return JSON.parse(storedTx);
     }
   } catch (error) {
+    // Keep only critical error logging
     console.error('Error loading stored transactions:', error);
   }
   return [];
@@ -114,6 +115,7 @@ const saveTransactionsToStorage = (transactions: Transaction[]) => {
   try {
     localStorage.setItem(TX_STORAGE_KEY, JSON.stringify(transactions));
   } catch (error) {
+    // Keep only critical error logging
     console.error('Error saving transactions to storage:', error);
   }
 };
@@ -139,8 +141,6 @@ const TransactionList: React.FC<TransactionListProps> = ({
   
   // Custom QuickNode RPC endpoint for Base Sepolia
   const quicknodeRpc = "https://wider-responsive-frog.base-sepolia.quiknode.pro/5fa9a3a6f60572a46a882de041a16843831aa7d7/";
-  
-  console.log('VCOPCollateralHook address:', vcopCollateralHookAddress);
 
   // Update localStorage when transactions change
   useEffect(() => {
@@ -165,8 +165,6 @@ const TransactionList: React.FC<TransactionListProps> = ({
         // Calculate the starting block (last 10000 blocks - increased for more history)
         const startingBlock = currentBlock - BigInt(10000);
         
-        console.log(`Fetching logs from block ${startingBlock} to ${currentBlock}`);
-        
         // Define the PSM Swap event signature and hash - NOTE: account is NOT indexed in actual implementation
         const psmSwapEventSignature = 'PSMSwap(address,bool,uint256,uint256)';
         const psmSwapEventHash = keccak256(toHex(psmSwapEventSignature));
@@ -183,8 +181,6 @@ const TransactionList: React.FC<TransactionListProps> = ({
             }
           ]
         }) as Log[];
-        
-        console.log('Past PSMSwap events:', psmSwapLogs);
         
         // Map logs to transaction objects
         const txsFromLogs = psmSwapLogs.map(log => {
@@ -206,13 +202,6 @@ const TransactionList: React.FC<TransactionListProps> = ({
             // Last 32 bytes is amountOut
             const amountOut = BigInt('0x' + data.slice(192, 256));
             
-            console.log('Decoded event data:', {
-              account,
-              isVcopToCollateral,
-              amountIn: formatUnits(amountIn, 6),
-              amountOut: formatUnits(amountOut, 6)
-            });
-            
             return {
               id: log.transactionHash,
               type: 'swap',
@@ -226,7 +215,8 @@ const TransactionList: React.FC<TransactionListProps> = ({
               hash: log.transactionHash
             } as Transaction;
           } catch (error) {
-            console.error('Error processing log:', error, log);
+            // Only keep critical error logs
+            console.error('Error processing log:', error);
             return null;
           }
         }).filter(tx => tx !== null) as Transaction[];
@@ -268,8 +258,6 @@ const TransactionList: React.FC<TransactionListProps> = ({
         // Set up a block watcher to get real-time events
         const unwatch = client.watchBlocks({
           onBlock: async (block) => {
-            console.log('New block:', block);
-            
             try {
               // Get new logs using the low-level request method
               const newLogs = await client.request({
@@ -285,8 +273,6 @@ const TransactionList: React.FC<TransactionListProps> = ({
               }) as Log[];
               
               if (newLogs.length > 0) {
-                console.log('New PSMSwap events:', newLogs);
-                
                 const newTxs = newLogs.map(log => {
                   try {
                     // Parse the event data directly from the data field
@@ -297,13 +283,6 @@ const TransactionList: React.FC<TransactionListProps> = ({
                     const isVcopToCollateral = parseInt(data.slice(64, 128), 16) !== 0;
                     const amountIn = BigInt('0x' + data.slice(128, 192));
                     const amountOut = BigInt('0x' + data.slice(192, 256));
-                    
-                    console.log('Decoded new event:', {
-                      account,
-                      isVcopToCollateral,
-                      amountIn: formatUnits(amountIn, 6),
-                      amountOut: formatUnits(amountOut, 6)
-                    });
                     
                     return {
                       id: log.transactionHash,
@@ -317,7 +296,8 @@ const TransactionList: React.FC<TransactionListProps> = ({
                       hash: log.transactionHash
                     } as Transaction;
                   } catch (error) {
-                    console.error('Error processing log:', error, log);
+                    // Only keep critical error logs
+                    console.error('Error processing log:', error);
                     return null;
                   }
                 }).filter(tx => tx !== null) as Transaction[];
@@ -338,6 +318,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
                 });
               }
             } catch (error) {
+              // Only keep critical error logs
               console.error('Error fetching new logs:', error);
             }
           }
@@ -348,6 +329,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
         };
         
       } catch (error) {
+        // Only keep critical error logs
         console.error('Error fetching past events:', error);
         
         // If fetching failed, make sure we at least have fallback transactions
