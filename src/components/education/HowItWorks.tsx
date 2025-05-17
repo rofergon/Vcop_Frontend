@@ -156,7 +156,7 @@ const HowItWorks: React.FC = () => {
             {/* Connection lines - now curved and animated */}
             <div className="absolute top-1/3 left-0 w-full flex justify-center">
               <svg className="absolute w-3/4 h-64 top-0" viewBox="0 0 300 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M30,10 C60,60 240,60 270,10" stroke="url(#gradient1)" strokeWidth="2" strokeDasharray="6 2" className="animate-pulse-slow">
+                <path d="M30,10 C60,60 240,60 270,10" stroke="url(#gradient1)" strokeWidth="2" strokeDasharray="6 2" className="animate-pulse-slow" style={{ opacity: 0 }}>
                   <animate attributeName="d" values="M30,10 C60,60 240,60 270,10; M30,20 C60,70 240,70 270,20; M30,10 C60,60 240,60 270,10" dur="8s" repeatCount="indefinite" />
                 </path>
                 <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
