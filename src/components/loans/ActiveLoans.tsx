@@ -3,6 +3,16 @@ import { formatEther, formatUnits } from 'viem';
 import { useEffect, useState } from 'react';
 import type { Abi, Address } from 'viem';
 import VCOPCollateralManagerABI from '../../abi/VCOPCollateralManager.json';
+import { CollateralService } from '../../services/CollateralService';
+import { 
+  Transaction, 
+  TransactionButton, 
+  TransactionStatus,
+  TransactionStatusLabel,
+  TransactionStatusAction,
+  type LifecycleStatus 
+} from '@coinbase/onchainkit/transaction';
+import { parseUnits } from 'viem';
 
 interface Position {
   collateralToken: string;
@@ -72,7 +82,7 @@ export default function ActiveLoans() {
   // Get all ratios using useContractReads
   const { data: ratiosData } = useContractReads({
     contracts: address && positionCount && positionsData ? 
-      positionsData.map((position, i) => ({
+      positionsData.map((_position, i) => ({
         address: COLLATERAL_MANAGER_ADDRESS as Address,
         abi: VCOPCollateralManagerABI as Abi,
         functionName: 'getCurrentCollateralRatio',
@@ -171,19 +181,172 @@ export default function ActiveLoans() {
 }
 
 function PositionCard({ position }: { position: Position }) {
-  const handleAddCollateral = async (positionId: number) => {
-    // TODO: Implement add collateral logic
-    console.log('Adding collateral to position:', positionId);
+  const [isAddingCollateral, setIsAddingCollateral] = useState(false);
+  const [isRepayingDebt, setIsRepayingDebt] = useState(false);
+  const [isWithdrawingCollateral, setIsWithdrawingCollateral] = useState(false);
+  const [amount, setAmount] = useState('');
+  const [calls, setCalls] = useState<any>(null);
+
+  const handleAddCollateral = () => {
+    setIsAddingCollateral(true);
   };
 
-  const handleRepayDebt = async (positionId: number) => {
-    // TODO: Implement repay debt logic
-    console.log('Repaying debt for position:', positionId);
+  const handleRepayDebt = () => {
+    setIsRepayingDebt(true);
   };
 
-  const handleWithdrawCollateral = async (positionId: number) => {
-    // TODO: Implement withdraw collateral logic
-    console.log('Withdrawing collateral from position:', positionId);
+  const handleWithdrawCollateral = () => {
+    setIsWithdrawingCollateral(true);
+  };
+
+  const handleConfirmAction = async () => {
+    if (!amount) return;
+
+    try {
+      console.log('Preparing transaction...', {
+        isAddingCollateral,
+        isRepayingDebt,
+        isWithdrawingCollateral,
+        positionId: position.positionId,
+        amount,
+        parsedAmount: parseUnits(amount, 6).toString()
+      });
+
+      let transactionCalls;
+      if (isAddingCollateral) {
+        transactionCalls = await CollateralService.addCollateral(
+          position.positionId,
+          parseUnits(amount, 6) // USDC has 6 decimals
+        );
+      } else if (isRepayingDebt) {
+        transactionCalls = await CollateralService.repayDebt(
+          position.positionId,
+          parseUnits(amount, 18) // VCOP has 18 decimals
+        );
+      } else if (isWithdrawingCollateral) {
+        transactionCalls = await CollateralService.withdrawCollateral(
+          position.positionId,
+          parseUnits(amount, 6) // USDC has 6 decimals
+        );
+      }
+
+      console.log('Transaction calls prepared:', transactionCalls);
+
+      // Set the calls for the Transaction component
+      setCalls(Array.isArray(transactionCalls) ? transactionCalls : [transactionCalls]);
+    } catch (error) {
+      console.error('Error preparing transaction:', error);
+    }
+  };
+
+  const handleTransactionStatus = (status: LifecycleStatus) => {
+    console.log('Transaction status:', status);
+    if (status.statusName === 'success') {
+      console.log('Transaction successful, cleaning up...');
+      handleCancel();
+      // Aquí podrías refrescar los datos de la posición si es necesario
+      window.location.reload(); // Recargar la página para ver los cambios
+    }
+  };
+
+  const handleCancel = () => {
+    setAmount('');
+    setIsAddingCollateral(false);
+    setIsRepayingDebt(false);
+    setIsWithdrawingCollateral(false);
+    setCalls(null);
+  };
+
+  const renderActionModal = () => {
+    if (!isAddingCollateral && !isRepayingDebt && !isWithdrawingCollateral) return null;
+
+    let title = '';
+    let actionText = '';
+    let maxAmount = '';
+
+    if (isAddingCollateral) {
+      title = 'Add Collateral';
+      actionText = 'Add';
+      maxAmount = formatUnits(position.collateralAmount, 6);
+    } else if (isRepayingDebt) {
+      title = 'Repay Debt';
+      actionText = 'Repay';
+      maxAmount = formatEther(position.vcopMinted);
+    } else {
+      title = 'Withdraw Collateral';
+      actionText = 'Withdraw';
+      maxAmount = formatUnits(position.collateralAmount, 6);
+    }
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl p-6 max-w-md w-full">
+          <h3 className="text-xl font-semibold text-blue-900 mb-4">{title}</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-blue-700 mb-1">
+                Amount ({isRepayingDebt ? 'VCOP' : 'USDC'})
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder={`Max: ${maxAmount}`}
+                  className="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <button
+                  onClick={() => setAmount(maxAmount)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-blue-600 hover:text-blue-800"
+                >
+                  Max
+                </button>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              {!calls ? (
+                <button
+                  onClick={handleConfirmAction}
+                  disabled={!amount || parseFloat(amount) <= 0}
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed"
+                >
+                  {actionText}
+                </button>
+              ) : (
+                <Transaction
+                  chainId={84532}
+                  calls={calls}
+                  onStatus={handleTransactionStatus}
+                >
+                  <TransactionButton 
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    text={actionText}
+                  />
+                  <div className="mt-3">
+                    <TransactionStatus>
+                      <div className="flex items-center gap-2 text-sm bg-blue-50/30 backdrop-blur-sm rounded-lg p-3 border border-blue-100/50">
+                        <TransactionStatusLabel />
+                        <div className="ml-auto">
+                          <TransactionStatusAction />
+                        </div>
+                      </div>
+                    </TransactionStatus>
+                  </div>
+                </Transaction>
+              )}
+              
+              <button
+                onClick={handleCancel}
+                className="w-full px-4 py-2 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -267,7 +430,7 @@ function PositionCard({ position }: { position: Position }) {
 
       <div className="grid grid-cols-2 gap-2">
         <button
-          onClick={() => handleAddCollateral(position.positionId)}
+          onClick={handleAddCollateral}
           className="px-4 py-2 bg-gradient-to-r from-blue-700 to-blue-600 text-white rounded-lg hover:from-blue-800 hover:to-blue-700 transition-all shadow-sm flex items-center justify-center"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -276,7 +439,7 @@ function PositionCard({ position }: { position: Position }) {
           Add Collateral
         </button>
         <button
-          onClick={() => handleRepayDebt(position.positionId)}
+          onClick={handleRepayDebt}
           className="px-4 py-2 bg-white text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition-all flex items-center justify-center"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -286,7 +449,7 @@ function PositionCard({ position }: { position: Position }) {
         </button>
         {!position.isAtRisk && (
           <button
-            onClick={() => handleWithdrawCollateral(position.positionId)}
+            onClick={handleWithdrawCollateral}
             className="col-span-2 px-4 py-2 bg-blue-50/50 text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-100/50 transition-all mt-1 flex items-center justify-center"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -297,6 +460,8 @@ function PositionCard({ position }: { position: Position }) {
           </button>
         )}
       </div>
+      
+      {renderActionModal()}
     </div>
   );
 } 
