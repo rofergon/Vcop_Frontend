@@ -77,7 +77,8 @@ const HowItWorks: React.FC = () => {
     { title: 'PSM Mechanism', id: 1 },
     { title: 'Collateral Loans', id: 2 },
     { title: 'How to Swap', id: 3 },
-    { title: 'Liquidations', id: 4 }
+    { title: 'Liquidations', id: 4 },
+    { title: 'Uniswap v4 Hooks', id: 5 }
   ];
   
   const tabContent = [
@@ -636,7 +637,7 @@ const HowItWorks: React.FC = () => {
               </div>
               
               <div className="flex justify-center">
-                <div className="w-0.5 h-10 bg-gradient-to-b from-red-300 to-gray-300 dark:from-red-700 dark:to-gray-600"></div>
+                <div className="w-0.5 h-10 bg-gray-300 dark:bg-gray-600"></div>
               </div>
               
               {/* Process Flow */}
@@ -785,6 +786,272 @@ const HowItWorks: React.FC = () => {
           <p className="text-sm text-gray-700 dark:text-gray-300">
             Liquidators are incentivized to maintain system solvency. When they liquidate an undercollateralized position, they receive the collateral in exchange for paying off the debt, potentially realizing a profit from the difference.
           </p>
+        </div>
+      </div>
+    </>,
+    
+    // Uniswap v4 Hooks
+    <>
+      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+        Uniswap v4 Hooks for VCOP Stability
+      </h3>
+      
+      <p className="text-gray-700 dark:text-gray-300 mb-4">
+        VCOP utilizes Uniswap v4's hook system to monitor and stabilize the peg. Our custom hooks watch for price movements and automatically trigger corrective actions when needed.
+      </p>
+      
+      <div className="my-6 flex justify-center">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-blue-100 dark:border-blue-800 max-w-4xl w-full backdrop-blur-sm relative overflow-hidden">
+          {/* Decorative circles */}
+          <div className="absolute -top-12 -right-12 w-40 h-40 bg-indigo-400/10 rounded-full filter blur-xl"></div>
+          <div className="absolute -bottom-14 -left-14 w-48 h-48 bg-blue-500/10 rounded-full filter blur-xl"></div>
+          
+          <div className="relative z-10">
+            {/* Hooks Diagram */}
+            <div className="grid grid-cols-1 gap-4">
+              {/* Hooks intro */}
+              <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 dark:from-indigo-900/20 dark:to-indigo-800/20 p-5 rounded-xl border border-indigo-200 dark:border-indigo-800/50 shadow-md text-center mb-4">
+                <div className="w-16 h-16 mx-auto flex items-center justify-center bg-indigo-200 dark:bg-indigo-800/50 rounded-full mb-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-700 dark:text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1H2a1 1 0 01-1-1v-3a1 1 0 011-1h1a2 2 0 100-4H2a1 1 0 01-1-1V7a1 1 0 011-1h3a1 1 0 001-1V4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1H2a1 1 0 01-1-1v-3a1 1 0 011-1h1a2 2 0 100-4H2a1 1 0 01-1-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
+                  </svg>
+                </div>
+                <h4 className="font-semibold text-indigo-800 dark:text-indigo-300 text-lg mb-2">Uniswap v4 Hook System</h4>
+                <p className="text-sm text-indigo-700 dark:text-indigo-400">
+                  Hooks allow custom logic to be attached to pool actions like swaps. They act as middleware to monitor, modify, or react to trading activity.
+                </p>
+              </div>
+              
+              {/* Flow Diagram */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                <div className="transform transition-all duration-300 hover:scale-105 col-span-1 md:col-span-3">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/20 p-5 rounded-xl border border-blue-200 dark:border-blue-800/50 shadow-md text-center">
+                    <h4 className="font-semibold text-blue-800 dark:text-blue-300 text-lg mb-3">VCOPCollateralHook</h4>
+                    <p className="text-sm text-blue-700 dark:text-blue-400 mb-3">
+                      Monitors VCOP pools for price fluctuations and large swaps that could affect the peg
+                    </p>
+                  </div>
+                </div>
+              
+                <div className="flex justify-center col-span-1 md:col-span-3">
+                  <div className="w-0.5 h-8 bg-gray-300 dark:bg-gray-600"></div>
+                </div>
+                
+                <div className="transform transition-all duration-300 hover:scale-105">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800/50 shadow-md h-full">
+                    <div className="w-10 h-10 mx-auto flex items-center justify-center bg-blue-200 dark:bg-blue-800/50 rounded-full mb-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-700 dark:text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                    <h4 className="font-semibold text-blue-800 dark:text-blue-300 text-center mb-2">beforeSwap()</h4>
+                    <p className="text-xs text-blue-700 dark:text-blue-400 text-center">
+                      Detects large swaps that might break the peg and takes preemptive action
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="transform transition-all duration-300 hover:scale-105">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800/50 shadow-md h-full">
+                    <div className="w-10 h-10 mx-auto flex items-center justify-center bg-blue-200 dark:bg-blue-800/50 rounded-full mb-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-700 dark:text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                    </div>
+                    <h4 className="font-semibold text-blue-800 dark:text-blue-300 text-center mb-2">afterSwap()</h4>
+                    <p className="text-xs text-blue-700 dark:text-blue-400 text-center">
+                      Checks price after trades and initiates stabilization if needed
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="transform transition-all duration-300 hover:scale-105">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800/50 shadow-md h-full">
+                    <div className="w-10 h-10 mx-auto flex items-center justify-center bg-blue-200 dark:bg-blue-800/50 rounded-full mb-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-700 dark:text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                      </svg>
+                    </div>
+                    <h4 className="font-semibold text-blue-800 dark:text-blue-300 text-center mb-2">afterAddLiquidity()</h4>
+                    <p className="text-xs text-blue-700 dark:text-blue-400 text-center">
+                      Monitors price after liquidity changes that might affect the market
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex justify-center col-span-1 md:col-span-3">
+                  <div className="w-0.5 h-8 bg-gray-300 dark:bg-gray-600"></div>
+                </div>
+                
+                <div className="transform transition-all duration-300 hover:scale-105 col-span-1 md:col-span-3">
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-800/20 p-5 rounded-xl border border-purple-200 dark:border-purple-800/50 shadow-md text-center">
+                    <h4 className="font-semibold text-purple-800 dark:text-purple-300 text-lg mb-2">PSM Stabilization</h4>
+                    <p className="text-sm text-purple-700 dark:text-purple-400">
+                      Hook triggers automatic PSM operations to correct price deviations
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Stabilization Flow */}
+              <div className="bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-blue-900/20 dark:to-indigo-900/20 p-5 rounded-xl border border-blue-200/50 dark:border-blue-800/30 shadow-md">
+                <h3 className="text-center text-blue-800 dark:text-blue-300 font-medium mb-4 flex items-center justify-center">
+                  <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center mr-2 text-sm">1</span>
+                  Stabilization Process
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="transform transition-all duration-300 hover:scale-105 hover:-translate-y-1">
+                    <div className="bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-900/20 dark:to-red-800/20 p-4 rounded-xl border border-red-200 dark:border-red-800/50 shadow-md h-full">
+                      <div className="flex items-center mb-3">
+                        <div className="w-10 h-10 flex items-center justify-center bg-red-200 dark:bg-red-800/50 rounded-full mr-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-700 dark:text-red-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                          </svg>
+                        </div>
+                        <h4 className="font-semibold text-red-800 dark:text-red-300">If Price Falls Below Peg</h4>
+                      </div>
+                      
+                      <div className="space-y-2 text-sm">
+                        <div className="bg-white dark:bg-gray-700 p-2 rounded shadow-sm border border-red-100 dark:border-red-800/30">
+                          <div className="flex items-center">
+                            <div className="bg-red-100 dark:bg-red-900/50 rounded-full w-6 h-6 flex items-center justify-center text-xs text-red-800 dark:text-red-300 font-medium mr-2">1</div>
+                            <span>Hook detects price below lower bound</span>
+                          </div>
+                        </div>
+                        <div className="bg-white dark:bg-gray-700 p-2 rounded shadow-sm border border-red-100 dark:border-red-800/30">
+                          <div className="flex items-center">
+                            <div className="bg-red-100 dark:bg-red-900/50 rounded-full w-6 h-6 flex items-center justify-center text-xs text-red-800 dark:text-red-300 font-medium mr-2">2</div>
+                            <span>Calculates stabilization amount based on deviation</span>
+                          </div>
+                        </div>
+                        <div className="bg-white dark:bg-gray-700 p-2 rounded shadow-sm border border-red-100 dark:border-red-800/30">
+                          <div className="flex items-center">
+                            <div className="bg-red-100 dark:bg-red-900/50 rounded-full w-6 h-6 flex items-center justify-center text-xs text-red-800 dark:text-red-300 font-medium mr-2">3</div>
+                            <span>PSM buys VCOP from market with collateral</span>
+                          </div>
+                        </div>
+                        <div className="bg-white dark:bg-gray-700 p-2 rounded shadow-sm border border-red-100 dark:border-red-800/30">
+                          <div className="flex items-center">
+                            <div className="bg-red-100 dark:bg-red-900/50 rounded-full w-6 h-6 flex items-center justify-center text-xs text-red-800 dark:text-red-300 font-medium mr-2">4</div>
+                            <span>Buying pressure increases VCOP price back to peg</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="transform transition-all duration-300 hover:scale-105 hover:-translate-y-1">
+                    <div className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-xl border border-green-200 dark:border-green-800/50 shadow-md h-full">
+                      <div className="flex items-center mb-3">
+                        <div className="w-10 h-10 flex items-center justify-center bg-green-200 dark:bg-green-800/50 rounded-full mr-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-700 dark:text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                          </svg>
+                        </div>
+                        <h4 className="font-semibold text-green-800 dark:text-green-300">If Price Rises Above Peg</h4>
+                      </div>
+                      
+                      <div className="space-y-2 text-sm">
+                        <div className="bg-white dark:bg-gray-700 p-2 rounded shadow-sm border border-green-100 dark:border-green-800/30">
+                          <div className="flex items-center">
+                            <div className="bg-green-100 dark:bg-green-900/50 rounded-full w-6 h-6 flex items-center justify-center text-xs text-green-800 dark:text-green-300 font-medium mr-2">1</div>
+                            <span>Hook detects price above upper bound</span>
+                          </div>
+                        </div>
+                        <div className="bg-white dark:bg-gray-700 p-2 rounded shadow-sm border border-green-100 dark:border-green-800/30">
+                          <div className="flex items-center">
+                            <div className="bg-green-100 dark:bg-green-900/50 rounded-full w-6 h-6 flex items-center justify-center text-xs text-green-800 dark:text-green-300 font-medium mr-2">2</div>
+                            <span>Calculates stabilization amount based on deviation</span>
+                          </div>
+                        </div>
+                        <div className="bg-white dark:bg-gray-700 p-2 rounded shadow-sm border border-green-100 dark:border-green-800/30">
+                          <div className="flex items-center">
+                            <div className="bg-green-100 dark:bg-green-900/50 rounded-full w-6 h-6 flex items-center justify-center text-xs text-green-800 dark:text-green-300 font-medium mr-2">3</div>
+                            <span>PSM sells VCOP to market for collateral</span>
+                          </div>
+                        </div>
+                        <div className="bg-white dark:bg-gray-700 p-2 rounded shadow-sm border border-green-100 dark:border-green-800/30">
+                          <div className="flex items-center">
+                            <div className="bg-green-100 dark:bg-green-900/50 rounded-full w-6 h-6 flex items-center justify-center text-xs text-green-800 dark:text-green-300 font-medium mr-2">4</div>
+                            <span>Selling pressure reduces VCOP price back to peg</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Flow Arrows */}
+              <div className="grid grid-cols-3 gap-5 -mt-2">
+                <div className="flex justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-yellow-500 animate-bounce-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                  </svg>
+                </div>
+                <div className="flex justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500 animate-bounce-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                  </svg>
+                </div>
+                <div className="flex justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500 animate-bounce-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                  </svg>
+                </div>
+              </div>
+              
+              {/* Result */}
+              <div className="flex justify-center">
+                <div className="bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/20 dark:to-blue-900/20 rounded-xl p-4 shadow-md border border-green-200/50 dark:border-green-800/30 max-w-md w-full text-center transform transition-all duration-300 hover:scale-105">
+                  <div className="flex items-center justify-center mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="font-medium text-green-800 dark:text-green-300">System Remains Solvent and Healthy</span>
+                  </div>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">The liquidation process ensures the protocol remains overcollateralized at all times</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="space-y-4 mt-6">
+        <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 border border-blue-100 dark:border-blue-800">
+          <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">Key Features of VCOPCollateralHook</h4>
+          <ul className="list-disc pl-5 text-sm text-gray-700 dark:text-gray-300 space-y-1">
+            <li><span className="font-medium">Large Swap Detection</span>: Identifies trades that could impact price stability</li>
+            <li><span className="font-medium">Price Monitoring</span>: Constantly checks if VCOP price is within target bounds</li>
+            <li><span className="font-medium">Automatic Stabilization</span>: Triggers PSM operations when prices deviate from the peg</li>
+            <li><span className="font-medium">PSM Management</span>: Controls the flow of collateral and VCOP between reserves</li>
+          </ul>
+        </div>
+        
+        <div className="bg-gradient-to-r from-indigo-50 to-indigo-100/50 dark:from-indigo-900/20 dark:to-indigo-800/20 rounded-xl p-5 border border-indigo-100 dark:border-indigo-800/50 shadow-md transform transition hover:shadow-lg">
+          <h4 className="font-medium text-indigo-800 dark:text-indigo-300 mb-2 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Technical Integration
+          </h4>
+          <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+            The hook is implemented as a smart contract that implements the Uniswap v4 BaseHook interface. It overrides specific hook functions:
+          </p>
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-md p-3 font-mono text-xs text-gray-800 dark:text-gray-300 overflow-x-auto">
+            <pre>
+{`function getHookPermissions() public pure override returns (Hooks.Permissions) {
+  return Hooks.Permissions({
+    beforeSwap: true,
+    afterSwap: true,
+    afterAddLiquidity: true,
+    // Other permissions set to false
+  });
+}`}
+            </pre>
+          </div>
         </div>
       </div>
     </>
