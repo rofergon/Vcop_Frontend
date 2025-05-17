@@ -10,7 +10,22 @@ const MINIMAL_ABI = parseAbi([
   'function addCollateral(uint256 positionId, uint256 amount)',
   'function repayDebt(uint256 positionId, uint256 amount)',
   'function approve(address spender, uint256 amount)',
+  'function liquidatePosition(address user, uint256 positionId)',
+  'function getCurrentCollateralRatio(address user, uint256 positionId) external view returns (uint256)',
+  'function positions(address user, uint256 positionId) external view returns (address, uint256, uint256)',
+  'function positionCount(address user) external view returns (uint256)',
+  'function collaterals(address token) external view returns (address, uint256, uint256, uint256, uint256, bool)',
 ]);
+
+export interface LiquidatablePosition {
+  owner: Address;
+  positionId: number;
+  collateralToken: Address;
+  collateralAmount: bigint;
+  vcopMinted: bigint;
+  ratio: number;
+  liquidationThreshold: number;
+}
 
 export class CollateralService {
   /**
@@ -74,5 +89,33 @@ export class CollateralService {
     };
 
     return [approveCall, repayCall];
+  }
+
+  /**
+   * Liquidate an undercollateralized position
+   * @param owner The address of the position owner
+   * @param positionId The ID of the position to liquidate
+   * @param amount The amount of VCOP needed for liquidation
+   */
+  static async liquidatePosition(owner: Address, positionId: number, amount: bigint) {
+    // First we need to approve VCOP transfer to pay the debt
+    const approveCall = {
+      address: VCOP_ADDRESS,
+      abi: MINIMAL_ABI,
+      functionName: 'approve',
+      args: [COLLATERAL_MANAGER_ADDRESS, amount],
+      chainId: 84532,
+    };
+
+    // Then we can liquidate the position
+    const liquidateCall = {
+      address: COLLATERAL_MANAGER_ADDRESS,
+      abi: MINIMAL_ABI,
+      functionName: 'liquidatePosition',
+      args: [owner, BigInt(positionId)],
+      chainId: 84532,
+    };
+
+    return [approveCall, liquidateCall];
   }
 } 

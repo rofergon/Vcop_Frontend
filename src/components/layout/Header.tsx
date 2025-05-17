@@ -17,6 +17,7 @@ const Header: React.FC<HeaderProps> = () => {
     { name: 'Dashboard', path: '/', current: location.pathname === '/' },
     { name: 'Loans', path: '/loans', current: location.pathname === '/loans' },
     { name: 'Swap', path: '/swap', current: location.pathname === '/swap' },
+    { name: 'Liquidations', path: '/liquidations', current: location.pathname === '/liquidations' },
     { name: 'Stats', path: '/stats', current: location.pathname === '/stats' }
   ];
 

@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import LoansPage from './pages/LoansPage';
 import SwapPage from './pages/SwapPage';
 import StatsPage from './pages/StatsPage';
+import LiquidationsPage from './pages/LiquidationsPage';
 import { Sun, Moon } from 'lucide-react';
 import { useDarkMode } from './context/DarkModeContext';
 
@@ -32,6 +33,7 @@ function App() {
             <Route path="/dashboard" element={<Navigate to="/" replace />} />
             <Route path="/loans" element={<LoansPage />} />
             <Route path="/swap" element={<SwapPage />} />
+            <Route path="/liquidations" element={<LiquidationsPage />} />
             <Route path="/stats" element={<StatsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
