@@ -3,7 +3,7 @@ import PriceOverview from '../components/dashboard/PriceOverview';
 import BlockchainReserveSummary from '../components/dashboard/BlockchainReserveSummary';
 import SwapInterface from '../components/swap/SwapInterface';
 import TransactionList from '../components/transactions/TransactionList';
-import HowItWorks from '../components/education/HowItWorks';
+import { Link } from 'react-router-dom';
 import { MOCK_PRICE_DATA, MOCK_TRANSACTIONS } from '../utils/constants';
 import { motion } from 'framer-motion';
 
@@ -109,15 +109,27 @@ const Dashboard: React.FC = () => {
         </motion.div>
       </div>
       
-      {/* Educational Section - with enhanced design */}
+      {/* Educational Section - with enhanced design - replaced with link to dedicated page */}
       <motion.div 
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 1 }}
         className="mt-10 bg-gradient-to-br from-blue-50/90 to-indigo-50/90 backdrop-blur-xl rounded-2xl border-2 border-blue-100/80 shadow-xl p-10 dark:from-blue-900/50 dark:to-indigo-900/50 dark:border-blue-700/80 transform transition-all duration-500 hover:shadow-2xl hover:border-blue-200/90 dark:hover:border-blue-600/90"
       >
-        <div className="max-w-5xl mx-auto">
-          <HowItWorks />
+        <div className="max-w-5xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 dark:from-blue-400 dark:to-indigo-400">Want to know how VCOP works?</h2>
+          <p className="text-blue-700/80 dark:text-blue-300/80 mb-6 max-w-2xl mx-auto">
+            Discover how the VCOP system maintains its stability through the PSM, collateralized loans, and liquidation mechanisms.
+          </p>
+          <Link 
+            to="/how-it-works" 
+            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-medium rounded-xl shadow-md hover:shadow-lg transition-all"
+          >
+            Explore How It Works
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </Link>
         </div>
       </motion.div>
       
