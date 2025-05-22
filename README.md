@@ -1,6 +1,6 @@
 # VCOP Frontend
 
-Frontend application for the VCOP (Venezuelan Coin Protocol) platform.
+Frontend application for the VCOP (Colombian Coin Protocol) platform.
 
 ## Collateralized Loans System
 
