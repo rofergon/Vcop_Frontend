@@ -7,9 +7,7 @@ import {
   TransactionStatus,
   TransactionStatusLabel,
   TransactionStatusAction,
-  TransactionToast,
-  type LifecycleStatus 
-} from '@coinbase/onchainkit/transaction';
+  TransactionToast} from '@coinbase/onchainkit/transaction';
 import { swapVcopToUsdcCalls, swapUsdcToVcopCalls } from '../../calls';
 
 // ABI for PSM stats
@@ -35,14 +33,8 @@ const PSM_HOOK_ABI = [
   }
 ];
 
-// Type definitions for contract return data
-type PSMStatsData = [bigint, bigint, bigint, bigint]; // [vcopReserve, collateralReserve, lastOpTimestamp, totalSwaps]
-type FeeData = bigint;
 
 // Simulate price feed
-const USD_TO_COP_RATE = 4200; // 1 USD = 4200 COP
-const VCOP_TO_COP_RATE = 1; // 1 VCOP = 1 COP (ideally)
-const PSM_FEE = 0.001; // 0.1% fee
 
 export default function PSMSwap() {
   const { address } = useAccount();

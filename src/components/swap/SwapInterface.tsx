@@ -22,8 +22,8 @@ import {
 } from '@coinbase/onchainkit/transaction';
 
 // Import ABIs
-import VCOPCollateralHookABI from '../../Abis/VCOPCollateralHook.json';
-import ERC20ABI from '../../Abis/ERC20.json';
+import VCOPCollateralHookABI from '../../abi/VCOPCollateralHook.json';
+import ERC20ABI from '../../abi/ERC20.json';
 
 interface SwapInterfaceProps {
   onSwapComplete?: (txHash: string) => void;

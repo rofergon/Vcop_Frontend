@@ -1,9 +1,7 @@
 import { useCallback, useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { ReserveData } from '../types';
-import MockERC20Abi from '../Abis /simplified_abi_MockERC20.json';
-import VCOPAbi from '../Abis /simplified_abi_VCOPCollateralized.json';
-import VCOPCollateralManagerAbi from '../Abis /simplified_abi_VCOPCollateralManager.json';
+import VCOPCollateralManagerAbi from '../abi/VCOPCollateralManager.json';
 import { CONTRACT_ADDRESSES, BLOCKCHAIN_CONSTANTS, CHAIN_CONFIG } from './constants';
 
 // Format from wei with proper decimals
